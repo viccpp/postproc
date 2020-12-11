@@ -1,0 +1,85 @@
+call_type == "CONNECTION" { digits = called_number }
+call_type == "MOBILE_ORIGINATED" {
+    digits = called_number ; digits <- +123456789
+    record_id = $RECNO
+    called_number <-> calling_number
+    concat_test = "008".digits
+}
+# Functions test block
+{
+    length_test = length("123456")
+    substr_test = substr("12345678", 5)
+    replace_test = replace_all("ab1cd4ef", /\w\d/, "<$0>")
+    upper_test = upper("aBcdE")
+    lower_test = lower("aBcdE")
+    reverse_test = reverse("abcdefg")
+    ltrim_spaces_test = "->".ltrim("  abc")
+    ltrim_test = ltrim("0012", "0")
+    rtrim_spaces_test = rtrim("abc  ")."<-"
+    rtrim_test = rtrim("12000", "0")
+    trim_spaces_test = trim("   abc  ")."<-"
+    trim_test = trim("0012000", "0")
+    lpad_test = lpad("1", 5, "0")
+    hex2dec_test = hex2dec("1Fa")
+    dec2hex_test = dec2hex("2654")
+    iadd_test = iadd(4, 6)
+    isub_test = isub(15, 5)
+    idiv_test = idiv(30, 4)
+    idiv_ceil_test = idiv_ceil(30, 4)
+    imul_test = imul(3, 4)
+    sift_test = sift(".a..b.c..", ".")
+    sift_nonprint_test = sift_nonprint("abc")
+    hex_in_string_literals_test = "|". trim("abc", "\x1\x02\x3") . "|"
+    bit_and_test = bit_and(3, 14)
+    bit_shl_test = bit_shl(1, 4)
+    bit_not_test = bit_not(0)
+    ip6_to_ip4_test1 = ip6_to_ip4("0000:0000:0000:0000:0000:FFFF:0102:0304")
+    ip6_to_ip4_test2 = ip6_to_ip4("0:0:0:0:0:ffff:102:304")
+    ip6_to_ip4_test3 = ip6_to_ip4("::FFFF:102:4")
+    ip6_to_ip4_test4 = ip6_to_ip4("::102:304")
+    ip4_to_hex = ip4_to_hex("127.10.0.1")
+    uuid_test = uuid()
+
+    empty_test = "FAILED"
+    starts_with_test = "FAILED"
+    lt_test = "FAILED"
+    gt_test = "FAILED"
+    le_test = "FAILED"
+    ge_test = "FAILED"
+}
+?empty("") & !?empty("abc") { empty_test = "OK" }
+
+?starts_with("abc", "ab") &
+?starts_with("ab", "ab") &
+!?starts_with("ab", "abc") { starts_with_test = "OK" }
+
+?lt(2, 3) & !?lt(3, 2) & !?lt(2, 2) { lt_test = "OK" }
+?gt(3, 2) & !?gt(2, 3) & !?gt(2, 2) { gt_test = "OK" }
+?le(2, 3) & ?le(2, 2) { le_test = "OK" }
+?ge(3, 2) & ?ge(2, 2) { ge_test = "OK" }
+
+@named_list = (1, 2, 3, 4, 5)
+2 in @named_list { named_list_ok = "true" }
+
+!(1 == 2) & 2 == 3
+{ not_test = "ERROR!!!" }
+
+{
+    map_test = map(3,
+        (1) -> 1,
+        (2, 3) -> 2,
+        (4, 5, 6) -> 3,
+        0
+    )
+}
+
+call_type in (
+    "SMS_ROAMING_ORIGINATED",
+    "SMS_ROAMING_TERMINATED",
+    "MOBILE_ROAMING_ORIGINATED",
+    "MOBILE_ROAMING_TERMINATED",
+    "GPRS_SESSION_ROAMING",
+    "SUPPLEMENTARY_SERVICE_ROAMING")
+{
+   break()
+}

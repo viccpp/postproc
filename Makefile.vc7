@@ -1,0 +1,19 @@
+###############################################################
+# GNU Make Makefile for Win32 - MS VC++ 7.1
+
+CC = cl -nologo
+
+OBJS := $(patsubst %.cpp,%.obj,$(wildcard *.cpp)) $(patsubst %.cpp,%.obj,$(wildcard postproc/*.cpp))
+
+.SUFFIXES:
+.SUFFIXES: .cpp .obj
+.PHONY: clean
+
+postproc.exe: $(OBJS)
+	$(CC) -Fe$@ $^ /link january_tools.lib january.lib pcre.lib
+
+.cpp.obj:
+	$(CC) -EHa -O2 -Ob1 -GF -c -I. -Fo$@ $<
+
+clean:
+	-del /F /Q $(subst /,\,$(OBJS)) postproc.exe 2>nul

@@ -1,0 +1,26 @@
+#ifndef __POSTPROC_CONDITION_H
+#define __POSTPROC_CONDITION_H
+
+#include<postproc/defs.h>
+
+namespace postproc {
+
+class context; // forward
+
+//////////////////////////////////////////////////////////////////////////////
+class condition
+{
+public:
+    virtual ~condition() {}
+
+    virtual bool eval(const map & , const context & ) const = 0;
+};
+//////////////////////////////////////////////////////////////////////////////
+class predicate : public condition
+{
+};
+//////////////////////////////////////////////////////////////////////////////
+
+} // namespace
+
+#endif // header guard

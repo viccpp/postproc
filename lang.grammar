@@ -1,0 +1,171 @@
+script:
+    script-elements
+
+script-elements:
+    script-element
+    script-element script-elements
+
+script-element:
+    rule
+    comment
+    named-list-declaration
+
+rule:
+    cond "{" action "}"
+    "{" action "}"
+
+cond:
+    expr "==" expr
+    expr "!=" expr
+    expr "in" string-list
+    expr "!in" string-list
+    expr "~" regexp
+    expr "!~" regexp
+    cond "&" cond
+    cond "|" cond
+    cond-atom
+
+cond-atom:
+    "(" cond ")"
+    predicate
+    "!" cond-atom
+
+action:
+    operation
+    operation new-line-or-semicolon action
+
+named-list-declaration:
+    "@" identifier "=" list-literal
+
+operation:
+    field "=" expr
+    field "<-" expr
+    field "<->" field
+    "discard" "(" ")"
+    "break" "(" ")"
+
+expr:
+    primary-expr
+    function
+    expr "." expr
+
+primary-expr:
+    field
+    string-literal
+    session-constant
+
+field:
+    identifier
+
+string-literal:
+    quoted-string
+    integer-literal
+
+session-constant:
+    '$'identifier
+
+function:
+    identifier "(" ")"
+    identifier "(" function-params ")"
+    "map" "(" map-func-params ")"
+
+function-params:
+    function-param
+    function-param "," function-params
+
+function-param:
+    expr
+    regexp
+    string-list
+
+map-func-params:
+    mapping
+    mapping "," expr
+
+mapping:
+    mapping-entry
+    mapping-entry "," mapping
+
+mapping-entry:
+    list-literal "->" expr
+
+predicate:
+    "?" function
+
+identifier:
+    ident-first-char
+    ident-first-char ident-char-seq
+
+ident-first-char:
+    'A'-'Z'
+    'a'-'z'
+    '_'
+
+ident-char-seq:
+    ident-char
+    ident-char ident-char-seq
+
+ident-char:
+    ident-first-char
+    digit
+
+regexp:
+    '/'perl-compatible-regexp'/'
+    '/'perl-compatible-regexp'/'re-options
+
+re-options:
+    re-option
+    re-option re-options
+
+re-option:
+    one of: i x m s
+
+string-list:
+    "@" identified
+    list-literal
+
+list-literal:
+    "(" list-elements ")"
+
+list-elements:
+    string-literal
+    string-literal "," list-elements
+
+quoted-string:
+    '""'
+    '"'char-seq'"'
+
+char-seq:
+    q-char
+    char-seq q-char
+
+q-char:
+    escape-sequence
+    any member of the source character set except new-line and "
+
+escape-sequence:
+    \"
+    \\
+    '\'any-character
+
+integer-literal:
+    '-'digits
+    '+'digits
+    digits
+
+digits:
+    digit
+    digit digits
+
+digit:
+    '0'-'9'
+
+comment:
+    "#" any text new-line
+
+new-line-or-semicolon:
+    new-line
+    ";"
+
+new-line:
+    NL character (code - 0Ah)
