@@ -1,5 +1,5 @@
-#ifndef __POSTPROC_STRING_LIST_H
-#define __POSTPROC_STRING_LIST_H
+#ifndef POSTPROC_STRING_LIST_H
+#define POSTPROC_STRING_LIST_H
 
 #include<postproc/defs.h>
 #include<postproc/exprs.h>
@@ -15,7 +15,7 @@ public:
     typedef std::vector<string_literal> values_t;
     typedef values_t::const_iterator const_iterator;
 
-    virtual ~string_list() {}
+    virtual ~string_list() = default;
 
     virtual const values_t &get_values(const context & ) const = 0;
 };
@@ -26,7 +26,7 @@ public:
     explicit list_literal(const std::list<string_literal> & );
     ~list_literal();
 
-    const values_t &get_values(const context & ) const; // override
+    const values_t &get_values(const context & ) const override;
 };
 //////////////////////////////////////////////////////////////////////////////
 class named_list : public string_list
@@ -36,7 +36,7 @@ public:
     explicit named_list(const std::string &n) : name(n) {}
     ~named_list();
 
-    const values_t &get_values(const context & ) const; // override
+    const values_t &get_values(const context & ) const override;
 };
 //////////////////////////////////////////////////////////////////////////////
 

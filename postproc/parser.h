@@ -1,8 +1,8 @@
-#ifndef __POSTPROC_PARSER_H
-#define __POSTPROC_PARSER_H
+#ifndef POSTPROC_PARSER_H
+#define POSTPROC_PARSER_H
 
-#include<mfisoft/january/defs.h>
-#include<mfisoft/january/string_buffer.h>
+#include<postproc/defs.h>
+#include<postproc/regexp.h>
 #include<postproc/script.h>
 #include<istream>
 #include<memory>
@@ -22,7 +22,7 @@ class function;
 class predicate;
 
 //////////////////////////////////////////////////////////////////////////////
-class parser : private jan::non_copyable
+class parser
 {
     class reader
     {
@@ -32,7 +32,7 @@ class parser : private jan::non_copyable
     public:
         struct end_of_file : public std::exception
         {
-            const char *what() const throw();
+            const char *what() const noexcept;
         };
 
         void init(std::istream &s) { is = &s; line_no = col_no = 1; }
@@ -59,6 +59,8 @@ class parser : private jan::non_copyable
 
     reader r;
 
+    static bool is_space(char );
+    static bool is_digit(char );
     static bool is_ident_first_char(char );
     static bool is_ident_char(char );
     static bool is_integer_literal_first_char(char );
@@ -69,7 +71,7 @@ class parser : private jan::non_copyable
     static typename FuncRec::func_t find_func(
         const FuncRec (&)[Sz], const std::string & );
 
-    PP_NORETURN static void throw_invalid_func_arg(const reader & );
+    [[noreturn]] static void throw_invalid_func_arg(const reader & );
     template<class , class > function *compile_trimlike_func();
 
     predicate *compile_pred_empty();
@@ -121,33 +123,34 @@ class parser : private jan::non_copyable
     condition *read_cond_atom();
     void read_bin_cond_op(std::string & );
     condition *read_rest_of_cond(
-        std::auto_ptr<expression> & , const std::string & );
+        std::unique_ptr<expression> & , const std::string & );
     void read_action(action & );
     operation *read_op();
     expression *read_expr();
     expression *read_simple_expr();
     std::string read_identifier();
-    regexp *read_regexp();
+    regexp read_regexp();
     string_list *read_string_list();
     list_literal *read_list_literal();
     void read_list_literal(std::list<string_literal> & );
     string_literal *read_string_literal();
     string_literal *read_quoted_string();
     integer_literal *read_integer_literal();
-    std::auto_ptr<expression>  read_func_arg(char = ')');
-    std::auto_ptr<regexp>      read_func_arg_re(char = ')');
-    std::auto_ptr<string_list> read_func_arg_list(char = ')');
-    std::auto_ptr<string_literal> read_func_arg_literal(char = ')');
+    std::unique_ptr<expression>  read_func_arg(char = ')');
+    regexp                       read_func_arg_re(char = ')');
+    std::unique_ptr<string_list> read_func_arg_list(char = ')');
+    std::unique_ptr<string_literal> read_func_arg_literal(char = ')');
     predicate *read_predicate(const std::string & );
     function *read_function(const std::string & );
 public:
-    class bad_syntax : public std::exception
+    struct bad_syntax : public simple_exception
     {
-        jan::static_string msg;
-    public:
-        explicit bad_syntax(const char * , const reader & );
-        const char *what() const throw();
+        bad_syntax(const char * , const reader & );
     };
+
+    parser() = default;
+    parser(const parser &) = delete;
+    parser &operator=(const parser &) = delete;
 
     void parse(std::istream & , script & , context & );
 };

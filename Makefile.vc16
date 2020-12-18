@@ -1,0 +1,19 @@
+###############################################################
+# GNU Make Makefile for Win32 - MS VC++ 16.0
+
+CC = cl -nologo /std:c++14 /Zc:__cplusplus /permissive-
+
+OBJS := $(patsubst %.cpp,%.obj,$(wildcard postproc/*.cpp) $(wildcard *.cpp))
+
+.SUFFIXES:
+.SUFFIXES: .cpp .obj
+.PHONY: clean
+
+postproc.exe: $(OBJS)
+	$(CC) -Fe$@ $^ /link january_tools.lib mfisoft14.lib pcre.lib
+
+.cpp.obj:
+	$(CC) -EHsc -O2 -Ob1 -GF -c -I. -Fo$@ $<
+
+clean:
+	-del /F /Q *.obj postproc\*.obj postproc.exe 2>nul

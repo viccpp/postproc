@@ -1,29 +1,29 @@
-#ifndef __POSTPROC_SCRIPT_H
-#define __POSTPROC_SCRIPT_H
+#ifndef POSTPROC_SCRIPT_H
+#define POSTPROC_SCRIPT_H
 
-#include<mfisoft/january/list.h>
-#include<postproc/defs.h>
 #include<postproc/rule.h>
 #include<postproc/context.h>
+#include<forward_list>
+#include<utility>
 #include<memory>
 
 namespace postproc {
 
 //////////////////////////////////////////////////////////////////////////////
-class script : private jan::non_copyable
+class script
 {
-    typedef jan::list<rule> list;
-    list rules;
-    list::iterator tail;
+    std::forward_list<rule> rules;
+    decltype(rules)::iterator tail;
 public:
     script();
+    script(const script &) = delete;
+    script &operator=(const script &) = delete;
     ~script();
 
-    void add_rule(std::auto_ptr<condition> & , action & );
+    void add_rule(std::unique_ptr<condition> & , action & );
 
-    typedef list::const_iterator const_iterator;
-    const_iterator begin() const { return rules.begin(); }
-    const_iterator end() const { return rules.end(); }
+    auto begin() const { return rules.begin(); }
+    auto end() const { return rules.end(); }
 
     bool empty() const { return rules.empty(); }
     void clear() { rules.clear(); }

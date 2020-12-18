@@ -1,5 +1,5 @@
-#ifndef __POSTPROC_CONDITION_H
-#define __POSTPROC_CONDITION_H
+#ifndef POSTPROC_CONDITION_H
+#define POSTPROC_CONDITION_H
 
 #include<postproc/defs.h>
 
@@ -11,7 +11,7 @@ class context; // forward
 class condition
 {
 public:
-    virtual ~condition() {}
+    virtual ~condition() = default;
 
     virtual bool eval(const map & , const context & ) const = 0;
 };

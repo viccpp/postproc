@@ -1,5 +1,5 @@
-#ifndef __POSTPROC_OPERATIONS_H
-#define __POSTPROC_OPERATIONS_H
+#ifndef POSTPROC_OPERATIONS_H
+#define POSTPROC_OPERATIONS_H
 
 #include<postproc/operation.h>
 #include<postproc/args.h>
@@ -12,32 +12,32 @@ class assignment : public operation
     not_null_ptr<field> fld;
     argument expr;
 public:
-    assignment(std::auto_ptr<field> & , std::auto_ptr<expression> & );
+    assignment(std::unique_ptr<field> & , std::unique_ptr<expression> & );
     ~assignment();
 
-    result_type eval(const map & , map & , const context & ) const; // override
+    result_type eval(const map & , map & , const context & ) const override;
 };
 //////////////////////////////////////////////////////////////////////////////
 class swap_op : public operation
 {
     not_null_ptr<field> f1, f2;
 public:
-    swap_op(std::auto_ptr<field> & , std::auto_ptr<field> & );
+    swap_op(std::unique_ptr<field> & , std::unique_ptr<field> & );
     ~swap_op();
 
-    result_type eval(const map & , map & , const context & ) const; // override
+    result_type eval(const map & , map & , const context & ) const override;
 };
 //////////////////////////////////////////////////////////////////////////////
 class discard : public operation
 {
 public:
-    result_type eval(const map & , map & , const context & ) const; // override
+    result_type eval(const map & , map & , const context & ) const override;
 };
 //////////////////////////////////////////////////////////////////////////////
 class break_ : public operation
 {
 public:
-    result_type eval(const map & , map & , const context & ) const; // override
+    result_type eval(const map & , map & , const context & ) const override;
 };
 //////////////////////////////////////////////////////////////////////////////
 

@@ -1,11 +1,10 @@
-#ifndef __POSTPROC_CONTEXT_H
-#define __POSTPROC_CONTEXT_H
+#ifndef POSTPROC_CONTEXT_H
+#define POSTPROC_CONTEXT_H
 
-#include<mfisoft/january/defs.h>
-#include<mfisoft/january/fastmap.h>
 #include<postproc/defs.h>
 #include<postproc/exprs.h>
 #include<postproc/session_constant_extractor.h>
+#include<unordered_map>
 #include<vector>
 #include<string>
 #include<list>
@@ -13,18 +12,16 @@
 namespace postproc {
 
 //////////////////////////////////////////////////////////////////////////////
-class context : private jan::non_copyable
+class context
 {
     struct stub_const_extractor : public session_constant_extractor
     {
-        stub_const_extractor() {} // only to get rid of "initializer"
-                                  // in definition of const object
-        std::string get(const std::string &name) const // override
+        std::string get(const std::string &name) const override
             { throw_unknown_session_constant(name); }
     };
     static const stub_const_extractor stub_sce;
 
-    typedef jan::fastmap<std::string, std::vector<string_literal> >
+    typedef std::unordered_map<std::string, std::vector<string_literal>>
         named_lists_map;
 
     named_lists_map named_lists;
@@ -32,6 +29,8 @@ class context : private jan::non_copyable
 public:
     context();
     explicit context(const session_constant_extractor & );
+    context(const context &) = delete;
+    context &operator=(const context &) = delete;
     ~context();
 
     std::string get_session_constant(const std::string &name) const

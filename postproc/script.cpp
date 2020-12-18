@@ -11,22 +11,20 @@ script::~script()
 {
 }
 //----------------------------------------------------------------------------
-void script::add_rule(std::auto_ptr<condition> &cond, action &act)
+void script::add_rule(std::unique_ptr<condition> &cond, action &act)
 {
-    list::stock stock = rules.alloc_stock();
-    new(stock.get_memory()) list::value_type(cond, act);
-    tail = rules.insert_after(tail, stock);
+    tail = rules.emplace_after(tail, cond, act);
 }
 //----------------------------------------------------------------------------
 bool script::process(
     const map &in_fields, map &out_fields, const context &ctx) const
 {
-    for(const_iterator it = begin(); it != end(); ++it)
+    for(auto &rule : rules)
     {
-        switch(it->eval(in_fields, out_fields, ctx))
+        switch(rule.eval(in_fields, out_fields, ctx))
         {
-            case break_script:   return true;
-            case discard_record: return false;
+            case operation_result::break_script:   return true;
+            case operation_result::discard_record: return false;
         }
         // TODO: copy out_fields to input ??
     }

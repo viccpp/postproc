@@ -1,13 +1,13 @@
 #include<postproc/exprs.h>
 #include<postproc/context.h>
-#include<mfisoft/january/string.h>
+#include<mfisoft/ascii_string.h>
 
 namespace postproc {
 
 //----------------------------------------------------------------------------
 field::field(const std::string &n) : name(n)
 {
-    jan::toupper(name);
+    mfi::ascii::toupper(name);
 }
 //----------------------------------------------------------------------------
 field::~field()
@@ -34,7 +34,7 @@ session_constant::~session_constant()
 //----------------------------------------------------------------------------
 session_constant::session_constant(const std::string &n) : name(n)
 {
-    jan::toupper(name);
+    mfi::ascii::toupper(name);
 }
 //----------------------------------------------------------------------------
 std::string session_constant::value(const map & , const context &ctx) const
@@ -43,7 +43,7 @@ std::string session_constant::value(const map & , const context &ctx) const
 }
 //----------------------------------------------------------------------------
 concatenation::concatenation(
-        std::auto_ptr<expression> &a1, std::auto_ptr<expression> &a2)
+        std::unique_ptr<expression> &a1, std::unique_ptr<expression> &a2)
     : arg1(a1), arg2(a2)
 {
 }

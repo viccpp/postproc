@@ -1,14 +1,13 @@
-#ifndef __POSTPROC_ACTION_H
-#define __POSTPROC_ACTION_H
+#ifndef POSTPROC_ACTION_H
+#define POSTPROC_ACTION_H
 
-#include<mfisoft/january/defs.h>
 #include<postproc/operation.h>
 #include<vector>
 
 namespace postproc {
 
 //////////////////////////////////////////////////////////////////////////////
-class action : private jan::non_copyable
+class action
 {
     typedef std::vector<operation*> cont_t;
     cont_t ops;
@@ -16,6 +15,9 @@ class action : private jan::non_copyable
 public:
     typedef operation::result_type result_type;
 
+    action() = default;
+    action(const action &) = delete;
+    action &operator=(const action &) = delete;
     ~action();
 
     typedef cont_t::const_iterator const_iterator;

@@ -1,22 +1,20 @@
-#ifndef __POSTPROC_DEFS_H
-#define __POSTPROC_DEFS_H
+#ifndef POSTPROC_DEFS_H
+#define POSTPROC_DEFS_H
 
-#include<mfisoft/january/static_string.h>
-#include<mfisoft/january/fastmap.h>
-#include<mfisoft/january/regexp.h>
-#include<map>
+#include<mfisoft/readonly_cstring.h>
+#include<unordered_map>
 #include<string>
 
 namespace postproc {
 
 //////////////////////////////////////////////////////////////////////////////
-class map : public jan::fastmap<std::string,std::string>
+class map : public std::unordered_map<std::string,std::string>
 {
     static const std::string empty_str;
 public:
     // Extend standard map by const subscript operation:
     // if field was not found then return empty string
-    using jan::fastmap<std::string,std::string>::operator[];
+    using std::unordered_map<std::string,std::string>::operator[];
     const std::string &operator[](const std::string &key) const
     {
         const_iterator it = find(key);
@@ -34,16 +32,16 @@ class exception : public std::exception
 // Implementation base class
 class simple_exception : public exception
 {
-    jan::static_string msg;
+    mfi::readonly_cstring msg;
 protected:
     explicit simple_exception(const char *m) : msg(m) {}
 public:
-    const char *what() const throw();
+    const char *what() const noexcept;
 };
 //////////////////////////////////////////////////////////////////////////////
 struct null_pointer : public exception
 {
-    const char *what() const throw();
+    const char *what() const noexcept;
 };
 //////////////////////////////////////////////////////////////////////////////
 struct undefined_constant : public simple_exception
@@ -64,7 +62,7 @@ struct unknown_named_list : public undefined_constant
 //////////////////////////////////////////////////////////////////////////////
 struct empty_function_arg : public exception
 {
-    const char *what() const throw();
+    const char *what() const noexcept;
 };
 //////////////////////////////////////////////////////////////////////////////
 struct invalid_function_arg : public simple_exception
@@ -74,19 +72,7 @@ struct invalid_function_arg : public simple_exception
 };
 //////////////////////////////////////////////////////////////////////////////
 
-using mfisoft::january::regexp;
-
-enum operation_result { nothing, break_script, discard_record };
-
-#if __cplusplus >= 201103L
-#define PP_NORETURN [[noreturn]]
-#elif defined(__GNUC__) || defined(__clang__)
-#define PP_NORETURN __attribute__((noreturn))
-#elif defined(_MSC_VER)
-#define PP_NORETURN __declspec(noreturn)
-#else
-#define PP_NORETURN
-#endif
+enum class operation_result { nothing, break_script, discard_record };
 
 } // namespace
 

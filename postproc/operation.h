@@ -1,5 +1,5 @@
-#ifndef __POSTPROC_OPERATION_H
-#define __POSTPROC_OPERATION_H
+#ifndef POSTPROC_OPERATION_H
+#define POSTPROC_OPERATION_H
 
 #include<postproc/defs.h>
 
@@ -13,7 +13,7 @@ class operation
 public:
     typedef operation_result result_type;
 
-    virtual ~operation() {}
+    virtual ~operation() = default;
 
     virtual result_type eval(const map & , map & , const context & ) const = 0;
 };

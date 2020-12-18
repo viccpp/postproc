@@ -3,7 +3,7 @@
 namespace postproc {
 
 //----------------------------------------------------------------------------
-rule::rule(std::auto_ptr<condition> &c, action &a)
+rule::rule(std::unique_ptr<condition> &c, action &a)
     : cond(c.release())
 {
     act.swap(a);
@@ -19,7 +19,7 @@ rule::result_type rule::eval(
 {
     if(!cond || cond->eval(in_fields, ctx))
         return act.eval(in_fields, out_fields, ctx);
-    return nothing;
+    return operation_result::nothing;
 }
 //----------------------------------------------------------------------------
 

@@ -3,7 +3,7 @@
 namespace postproc {
 
 //----------------------------------------------------------------------------
-equal::equal(std::auto_ptr<expression> &a1, std::auto_ptr<expression> &a2)
+equal::equal(std::unique_ptr<expression> &a1, std::unique_ptr<expression> &a2)
     : arg1(a1), arg2(a2)
 {
 }
@@ -22,7 +22,7 @@ bool not_equal::eval(const map &fields, const context &c) const
     return !eq.eval(fields, c);
 }
 //----------------------------------------------------------------------------
-in_set::in_set(std::auto_ptr<expression> &s, std::auto_ptr<string_list> &set)
+in_set::in_set(std::unique_ptr<expression> &s, std::unique_ptr<string_list> &set)
     : str(s), list(set)
 {
 }
@@ -40,8 +40,8 @@ bool in_set::eval(const map &fields, const context &ctx) const
     return false;
 }
 //----------------------------------------------------------------------------
-not_in_set::not_in_set(std::auto_ptr<expression> &s,
-                                        std::auto_ptr<string_list> &set)
+not_in_set::not_in_set(std::unique_ptr<expression> &s,
+                                        std::unique_ptr<string_list> &set)
     : str(s), list(set)
 {
 }
@@ -59,9 +59,8 @@ bool not_in_set::eval(const map &fields, const context &ctx) const
     return true;
 }
 //----------------------------------------------------------------------------
-match_regexp::match_regexp(
-                    std::auto_ptr<expression> &s, std::auto_ptr<regexp> &r)
-    : str(s), re(r)
+match_regexp::match_regexp(std::unique_ptr<expression> &s, regexp r)
+    : str(s), re(std::move(r))
 {
 }
 //----------------------------------------------------------------------------
@@ -80,7 +79,7 @@ bool not_match_regexp::eval(const map &fields,
     return !cond.eval(fields, ctx);
 }
 //----------------------------------------------------------------------------
-cond_and::cond_and(std::auto_ptr<condition> &c1, std::auto_ptr<condition> &c2)
+cond_and::cond_and(std::unique_ptr<condition> &c1, std::unique_ptr<condition> &c2)
     : cond1(c1), cond2(c2)
 {
 }
@@ -94,7 +93,7 @@ bool cond_and::eval(const map &fields, const context &ctx) const
     return cond1->eval(fields, ctx) && cond2->eval(fields, ctx);
 }
 //----------------------------------------------------------------------------
-cond_or::cond_or(std::auto_ptr<condition> &c1, std::auto_ptr<condition> &c2)
+cond_or::cond_or(std::unique_ptr<condition> &c1, std::unique_ptr<condition> &c2)
     : cond1(c1), cond2(c2)
 {
 }
@@ -108,7 +107,7 @@ bool cond_or::eval(const map &fields, const context &ctx) const
     return cond1->eval(fields, ctx) || cond2->eval(fields, ctx);
 }
 //----------------------------------------------------------------------------
-cond_not::cond_not(std::auto_ptr<condition> &c) : cond(c)
+cond_not::cond_not(std::unique_ptr<condition> &c) : cond(c)
 {
 }
 //----------------------------------------------------------------------------

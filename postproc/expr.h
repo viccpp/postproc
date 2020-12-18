@@ -1,5 +1,5 @@
-#ifndef __POSTPROC_EXPR_H
-#define __POSTPROC_EXPR_H
+#ifndef POSTPROC_EXPR_H
+#define POSTPROC_EXPR_H
 
 #include<postproc/defs.h>
 #include<string>
@@ -12,7 +12,7 @@ class context; // forward
 class expression
 {
 public:
-    virtual ~expression() {}
+    virtual ~expression() = default;
 
     virtual std::string value(const map & , const context & ) const = 0;
 };

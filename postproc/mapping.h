@@ -1,28 +1,32 @@
-#ifndef __POSTPROC_MAPPING_H
-#define __POSTPROC_MAPPING_H
+#ifndef POSTPROC_MAPPING_H
+#define POSTPROC_MAPPING_H
 
 #include<postproc/defs.h>
 #include<postproc/exprs.h>
-#include<mfisoft/january/fastmap.h>
+#include<unordered_map>
+#include<memory>
 #include<list>
 
 namespace postproc {
 
 //////////////////////////////////////////////////////////////////////////////
-class mapping : private jan::non_copyable
+class mapping
 {
-    typedef jan::fastmap<std::string, const expression*> map_t;
-    map_t m;
+    std::unordered_map<std::string, const expression*> m;
 public:
-    typedef std::list<std::pair<std::list<string_literal>,const expression *> >
-        list;
+    typedef std::list<std::pair<
+        std::list<string_literal>,
+        std::unique_ptr<const expression>
+    >> list;
 
-    explicit mapping(list & );
+    explicit mapping(list );
+    mapping(const mapping &) = delete;
+    mapping &operator=(const mapping &) = delete;
     ~mapping();
 
     const expression *find(const std::string &key) const
     {
-        map_t::const_iterator it = m.find(key);
+        auto it = m.find(key);
         return it != m.end() ? it->second : nullptr;
     }
 };

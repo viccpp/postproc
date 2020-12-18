@@ -1,21 +1,21 @@
 ###############################################################
 # GNU Make Makefile for UNIX - GNU C++
 
-CC = g++ -std=c++98 -pedantic-errors -Wno-long-long
+CC = g++ -std=c++14 -pedantic-errors
 
-OBJS := $(patsubst %.cpp,%.o,$(wildcard *.cpp)) $(patsubst %.cpp,%.o,$(wildcard postproc/*.cpp))
+OBJS := $(patsubst %.cpp,%.o,$(wildcard postproc/*.cpp) $(wildcard *.cpp))
 
 .SUFFIXES:
 .SUFFIXES: .cpp .o
 .PHONY: clean
 
 postprocess: $(OBJS)
-	$(CC) -o $@ $^ -ljanuary_tools -ljanuary -lpcre
+	$(CC) -o $@ $^ -lmfisoft14 -lpcre
 
 .cpp.o:
-	$(CC) -c -I. -MMD -o $@ $<
+	$(CC) -c -I. -g -MMD -o $@ $<
 
 -include $(OBJS:.o=.d)
 
 clean:
-	rm -f $(OBJS) $(OBJS:.o=.d) postprocess postprocess.exe
+	rm -f *.o *.d postproc/*.o postproc/*.d postprocess postprocess.exe

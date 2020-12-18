@@ -2,7 +2,7 @@
 
 namespace postproc {
 
-const context::stub_const_extractor context::stub_sce;
+const context::stub_const_extractor context::stub_sce{};
 //----------------------------------------------------------------------------
 context::context() : sce(&stub_sce)
 {

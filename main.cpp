@@ -1,6 +1,5 @@
-#include<mfisoft/january/memory.h>
-#include<mfisoft/january/string.h>
-#include<mfisoft/january/error.h>
+#include<mfisoft/ascii_string.h>
+#include<mfisoft/error.h>
 #include<iterator>
 #include<iostream>
 #include<fstream>
@@ -24,11 +23,10 @@ public:
 
     void inc_counter() { ++count; }
 
-    // override
-    std::string get(const std::string &name) const
+    std::string get(const std::string &name) const override
     {
-        if(jan::equal_icase(name, "RECNO"))
-            return jan::string_buffer(8) << count;
+        if(mfi::ascii::equal_icase(name, "RECNO"))
+            return std::to_string(count);
         throw_unknown_session_constant(name);
     }
 };
@@ -59,14 +57,14 @@ void make_script(postproc::script &pp)
     using namespace postproc;
 
     {
-        std::auto_ptr<expression>
+        std::unique_ptr<expression>
             cond_arg1( new field("CALL_TYPE") ),
             cond_arg2( new string_literal("CONNECTION") );
 
-        std::auto_ptr<condition> cond( new equal(cond_arg1, cond_arg2) );
+        std::unique_ptr<condition> cond( new equal(cond_arg1, cond_arg2) );
 
-        std::auto_ptr<field> f( new field("DIGITS") );
-        std::auto_ptr<expression> expr( new field("CALLED_NUMBER") );
+        std::unique_ptr<field> f( new field("DIGITS") );
+        std::unique_ptr<expression> expr( new field("CALLED_NUMBER") );
 
         action act;
         act.push_back( new assignment(f, expr) );
@@ -74,14 +72,14 @@ void make_script(postproc::script &pp)
         pp.add_rule(cond, act);
     }
     {
-        std::auto_ptr<expression>
+        std::unique_ptr<expression>
             cond_arg1( new field("CALL_TYPE") ),
             cond_arg2( new string_literal("MOBILE_ORIGINATED") );
 
-        std::auto_ptr<condition> cond( new equal(cond_arg1, cond_arg2) );
+        std::unique_ptr<condition> cond( new equal(cond_arg1, cond_arg2) );
 
-        std::auto_ptr<field> f( new field("DIGITS") );
-        std::auto_ptr<expression> expr( new field("CALLING_NUMBER") );
+        std::unique_ptr<field> f( new field("DIGITS") );
+        std::unique_ptr<expression> expr( new field("CALLING_NUMBER") );
 
         action act;
         act.push_back( new assignment(f, expr) );
@@ -122,7 +120,7 @@ void run()
 
     //make_script(pp);
     std::ifstream script("script");
-    if(!script.is_open()) throw jan::exception("Couldn't open script file");
+    if(!script.is_open()) throw mfi::exception("Couldn't open script file");
     parse_script(script, pp, ctx);
     std::cout << std::distance(pp.begin(), pp.end()) << " rules\n\n";
 

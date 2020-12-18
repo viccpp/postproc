@@ -26,9 +26,9 @@ action::result_type action::eval(
     for(const_iterator it = begin(); it != end(); ++it)
     {
         result_type res = (*it)->eval(in_fields, out_fields, ctx);
-        if(res != nothing) return res;
+        if(res != operation_result::nothing) return res;
     }
-    return nothing;
+    return operation_result::nothing;
 }
 //----------------------------------------------------------------------------
 
