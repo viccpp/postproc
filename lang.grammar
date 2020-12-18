@@ -9,6 +9,7 @@ script-element:
     rule
     comment
     named-list-declaration
+    named-mapping-declaration
 
 rule:
     cond "{" action "}"
@@ -36,6 +37,9 @@ action:
 
 named-list-declaration:
     "@" identifier "=" list-literal
+
+named-mapping-declaration:
+    "%" identifier "=" "(" mapping ")"
 
 operation:
     field "=" expr
@@ -81,6 +85,8 @@ function-param:
 map-func-params:
     mapping
     mapping "," expr
+    "%" identifier
+    "%" identifier "," expr
 
 mapping:
     mapping-entry

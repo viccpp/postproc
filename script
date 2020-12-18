@@ -64,13 +64,20 @@ call_type == "MOBILE_ORIGINATED" {
 !(1 == 2) & 2 == 3
 { not_test = "ERROR!!!" }
 
+%named_mapping =
+(
+    (1) -> 1,
+    (2, 3) -> 2,
+    (4, 5, 6) -> 3
+)
 {
-    map_test = map(3,
+    map_test1 = map(3,
         (1) -> 1,
         (2, 3) -> 2,
         (4, 5, 6) -> 3,
         0
     )
+    map_test2 = map(3, %named_mapping, 0)
 }
 
 call_type in (
