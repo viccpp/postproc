@@ -13,7 +13,7 @@ postprocess: $(OBJS)
 	$(CC) -o $@ $^ -lmfisoft14 -lpcre
 
 .cpp.o:
-	$(CC) -c -I. -g -MMD -o $@ $<
+	$(CC) -c -I. -g -Wall -MMD -o $@ $<
 
 -include $(OBJS:.o=.d)
 

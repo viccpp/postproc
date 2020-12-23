@@ -5,7 +5,6 @@
 #include<postproc/context.h>
 #include<forward_list>
 #include<utility>
-#include<memory>
 
 namespace postproc {
 
@@ -13,20 +12,25 @@ namespace postproc {
 class script
 {
     std::forward_list<rule> rules;
-    decltype(rules)::iterator tail;
+    decltype(rules)::iterator tail = rules.before_begin();
+    void reset_tail() { tail = rules.before_begin(); }
 public:
     script();
+    script(script &&o) noexcept
+        : rules(std::move(o.rules)), tail(o.tail) { o.reset_tail(); }
     script(const script &) = delete;
-    script &operator=(const script &) = delete;
     ~script();
 
-    void add_rule(std::unique_ptr<condition> & , action & );
+    script &operator=(script &&o) noexcept { swap(o); return *this; }
+    script &operator=(const script &) = delete;
+
+    void add_rule(unique_ptr<condition> , action );
 
     auto begin() const { return rules.begin(); }
     auto end() const { return rules.end(); }
 
     bool empty() const { return rules.empty(); }
-    void clear() { rules.clear(); }
+    void clear() { rules.clear(); reset_tail(); }
 
     void swap(script &o)
     {

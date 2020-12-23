@@ -65,9 +65,8 @@ class numeric_argument_var :
     const Parser &parser() const { return *this; }
 public:
     typedef Parser parser_type;
-    explicit numeric_argument_var(
-            std::unique_ptr<expression> &arg, Parser p = Parser())
-        : Parser(p), expr(arg) {}
+    explicit numeric_argument_var(unique_ptr<expression> arg, Parser p = {})
+        : Parser(p), expr(std::move(arg)) {}
     Num value(const map &fields, const context &ctx,
                                     const char *func, int i) const override
     {
@@ -82,16 +81,16 @@ class numeric_argument_
     not_null_ptr<const numeric_argument_expr<Num> > arg;
     template<class Parser>
     static numeric_argument_expr<Num> *create(
-        std::unique_ptr<expression> & , const char * , int , Parser );
+        unique_ptr<expression> , const char * , int , Parser );
 public:
     typedef Num value_type;
 
     template<class Parser>
     numeric_argument_(
-        std::unique_ptr<expression> & , const char * , int , Parser );
+        unique_ptr<expression> , const char * , int , Parser );
     template<class Parser>
     numeric_argument_(
-        std::unique_ptr<expression> & , Num , const char * , int , Parser );
+        unique_ptr<expression> , Num , const char * , int , Parser );
 
     Num value(const map &fields, const context &ctx,
                                     const char *func, int i) const
@@ -115,29 +114,30 @@ Num num_parser<Num>::parse(const std::string &val, const char *func, int i)
 template<class Num>
 template<class Parser>
 inline numeric_argument_expr<Num> *numeric_argument_<Num>::create(
-    std::unique_ptr<expression> &expr, const char *func, int i, Parser p)
+    unique_ptr<expression> expr, const char *func, int i, Parser p)
 {
     if(auto lit = dynamic_cast<string_literal *>(expr.get()))
         return new numeric_argument_const<Num>(*lit, func, i, p);
-    return new numeric_argument_var<Num, Parser>(expr, p);
+    return new numeric_argument_var<Num, Parser>(std::move(expr), p);
 }
 //----------------------------------------------------------------------------
 template<class Num>
 template<class Parser>
 numeric_argument_<Num>::numeric_argument_(
-    std::unique_ptr<expression> &expr, const char *func, int i, Parser p)
+    unique_ptr<expression> expr, const char *func, int i, Parser p)
 :
-    arg(not_null, create(expr, func, i, p))
+    arg(not_null, create(std::move(expr), func, i, p))
 {
 }
 //----------------------------------------------------------------------------
 template<class Num>
 template<class Parser>
 numeric_argument_<Num>::numeric_argument_(
-    std::unique_ptr<expression> &expr, Num def, const char *func, int i, Parser p)
+    unique_ptr<expression> expr, Num def, const char *func, int i, Parser p)
 :
     arg(not_null, expr.get() ?
-        create(expr, func, i, p) : new numeric_argument_const<Num>(def))
+        create(std::move(expr), func, i, p) :
+        new numeric_argument_const<Num>(def))
 {
 }
 //----------------------------------------------------------------------------
@@ -149,7 +149,7 @@ class argument
 {
     not_null_ptr<const expression> expr;
 public:
-    explicit argument(std::unique_ptr<expression> &arg) : expr(arg) {}
+    explicit argument(unique_ptr<expression> arg) : expr(std::move(arg)) {}
     std::string value(const map &fields, const context &ctx) const
         { return expr->value(fields, ctx); }
 };
@@ -160,10 +160,10 @@ class numeric_argument : public numeric_argument_<Num>
     typedef numeric_argument_<Num> base;
 public:
     typedef Parser parser_type;
-    explicit numeric_argument(std::unique_ptr<expression> &expr)
-        : base(expr, Func, I, Parser()) {}
-    numeric_argument(std::unique_ptr<expression> &expr, Num def)
-        : base(expr, def, Func, I, Parser()) {}
+    explicit numeric_argument(unique_ptr<expression> expr)
+        : base(std::move(expr), Func, I, Parser()) {}
+    numeric_argument(unique_ptr<expression> expr, Num def)
+        : base(std::move(expr), def, Func, I, Parser()) {}
     Num value(const map &fields, const context &ctx) const
         { return base::value(fields, ctx, Func, I); }
 };
@@ -172,7 +172,8 @@ class list_argument
 {
     not_null_ptr<const string_list> list;
 public:
-    explicit list_argument(std::unique_ptr<string_list> &arg) : list(arg) {}
+    explicit list_argument(unique_ptr<string_list> arg)
+        : list(std::move(arg)) {}
     const string_list::values_t &get_values(const context &ctx) const
         { return list->get_values(ctx); }
 };

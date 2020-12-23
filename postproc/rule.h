@@ -3,27 +3,22 @@
 
 #include<postproc/condition.h>
 #include<postproc/action.h>
-#include<utility>
-#include<memory>
 
 namespace postproc {
 
 //////////////////////////////////////////////////////////////////////////////
 class rule
 {
-    condition *cond;
+    unique_ptr<condition> cond;
     action act;
 public:
     typedef operation::result_type result_type;
 
-    rule(std::unique_ptr<condition> & , action & );
-    rule(const rule &) = delete;
-    rule &operator=(const rule &) = delete;
-    ~rule();
+    rule(unique_ptr<condition> , action );
 
     void swap(rule &o)
     {
-        std::swap(cond, o.cond);
+        cond.swap(o.cond);
         act.swap(o.act);
     }
 

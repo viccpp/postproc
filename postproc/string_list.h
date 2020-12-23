@@ -33,7 +33,7 @@ class named_list : public string_list
 {
     std::string name;
 public:
-    explicit named_list(const std::string &n) : name(n) {}
+    explicit named_list(std::string n) : name(std::move(n)) {}
     ~named_list();
 
     const values_t &get_values(const context & ) const override;

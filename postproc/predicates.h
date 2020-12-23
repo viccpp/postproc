@@ -13,7 +13,7 @@ class empty : public predicate
 {
     argument arg;
 public:
-    explicit empty(std::unique_ptr<expression> & );
+    explicit empty(unique_ptr<expression> );
     ~empty();
 
     bool eval(const map & , const context & ) const override;
@@ -24,7 +24,7 @@ class starts_with : public predicate
 {
     argument arg1, arg2;
 public:
-    starts_with(std::unique_ptr<expression> & , std::unique_ptr<expression> & );
+    starts_with(unique_ptr<expression> , unique_ptr<expression> );
     ~starts_with();
 
     bool eval(const map & , const context & ) const override;
@@ -37,7 +37,7 @@ class lt : public predicate
     numeric_argument<long long, func, 1> arg1;
     numeric_argument<long long, func, 2> arg2;
 public:
-    lt(std::unique_ptr<expression> & , std::unique_ptr<expression> & );
+    lt(unique_ptr<expression> , unique_ptr<expression> );
     ~lt();
 
     bool eval(const map & , const context & ) const override;
@@ -50,7 +50,7 @@ class gt : public predicate
     numeric_argument<long long, func, 1> arg1;
     numeric_argument<long long, func, 2> arg2;
 public:
-    gt(std::unique_ptr<expression> & , std::unique_ptr<expression> & );
+    gt(unique_ptr<expression> , unique_ptr<expression> );
     ~gt();
 
     bool eval(const map & , const context & ) const override;
@@ -63,7 +63,7 @@ class le : public predicate
     numeric_argument<long long, func, 1> arg1;
     numeric_argument<long long, func, 2> arg2;
 public:
-    le(std::unique_ptr<expression> & , std::unique_ptr<expression> & );
+    le(unique_ptr<expression> , unique_ptr<expression> );
     ~le();
 
     bool eval(const map & , const context & ) const override;
@@ -76,7 +76,7 @@ class ge : public predicate
     numeric_argument<long long, func, 1> arg1;
     numeric_argument<long long, func, 2> arg2;
 public:
-    ge(std::unique_ptr<expression> & , std::unique_ptr<expression> & );
+    ge(unique_ptr<expression> , unique_ptr<expression> );
     ~ge();
 
     bool eval(const map & , const context & ) const override;

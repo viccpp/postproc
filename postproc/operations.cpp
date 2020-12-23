@@ -4,8 +4,8 @@
 namespace postproc {
 
 //----------------------------------------------------------------------------
-assignment::assignment(std::unique_ptr<field> &f, std::unique_ptr<expression> &e)
-    : fld(f), expr(e)
+assignment::assignment(unique_ptr<field> f, unique_ptr<expression> e)
+    : fld(std::move(f)), expr(std::move(e))
 {
 }
 //----------------------------------------------------------------------------
@@ -20,8 +20,8 @@ assignment::result_type assignment::eval(
     return operation_result::nothing;
 }
 //----------------------------------------------------------------------------
-swap_op::swap_op(std::unique_ptr<field> &fld1, std::unique_ptr<field> &fld2)
-    : f1(fld1), f2(fld2)
+swap_op::swap_op(unique_ptr<field> fld1, unique_ptr<field> fld2)
+    : f1(std::move(fld1)), f2(std::move(fld2))
 {
 }
 //----------------------------------------------------------------------------

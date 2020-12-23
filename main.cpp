@@ -4,10 +4,8 @@
 #include<iostream>
 #include<fstream>
 #include<sstream>
-#include<exception>
-#include<map>
 #include<string>
-#include<memory>
+#include<exception>
 #include<postproc/script.h>
 #include<postproc/parser.h>
 #include<postproc/conditions.h>
@@ -47,7 +45,7 @@ int main()
     }
     return 1;
 }
-void make_script(postproc::script &pp)
+postproc::script make_script()
 {
     // call_type == "CONNECTION" { digits = called_number }
     // call_type == "MOBILE_ORIGINATED" {
@@ -55,81 +53,72 @@ void make_script(postproc::script &pp)
     //    record_id = $RECNO;
     // }
     using namespace postproc;
+    script pp;
 
-    {
-        std::unique_ptr<expression>
-            cond_arg1( new field("CALL_TYPE") ),
-            cond_arg2( new string_literal("CONNECTION") );
-
-        std::unique_ptr<condition> cond( new equal(cond_arg1, cond_arg2) );
-
-        std::unique_ptr<field> f( new field("DIGITS") );
-        std::unique_ptr<expression> expr( new field("CALLED_NUMBER") );
-
-        action act;
-        act.push_back( new assignment(f, expr) );
-
-        pp.add_rule(cond, act);
-    }
-    {
-        std::unique_ptr<expression>
-            cond_arg1( new field("CALL_TYPE") ),
-            cond_arg2( new string_literal("MOBILE_ORIGINATED") );
-
-        std::unique_ptr<condition> cond( new equal(cond_arg1, cond_arg2) );
-
-        std::unique_ptr<field> f( new field("DIGITS") );
-        std::unique_ptr<expression> expr( new field("CALLING_NUMBER") );
-
-        action act;
-        act.push_back( new assignment(f, expr) );
-
-        f.reset( new field("RECORD_ID") );
-        expr.reset( new session_constant("RECNO") );
-        act.push_back( new assignment(f, expr) );
-
-        pp.add_rule(cond, act);
-    }
+    pp.add_rule(
+        make_unique<equal>(
+            make_unique<field>("CALL_TYPE"),
+            make_unique<string_literal>("CONNECTION")
+        ),
+        action{
+            make_unique<assignment>(
+                make_unique<field>("DIGITS"),
+                make_unique<field>("CALLED_NUMBER")
+            )
+        }
+    );
+    pp.add_rule(
+        make_unique<equal>(
+            make_unique<field>("CALL_TYPE"),
+            make_unique<string_literal>("MOBILE_ORIGINATED")
+        ),
+        action{
+            make_unique<assignment>(
+                make_unique<field>("DIGITS"),
+                make_unique<field>("CALLING_NUMBER")
+            ),
+            make_unique<assignment>(
+                make_unique<field>("RECORD_ID"),
+                make_unique<session_constant>("RECNO")
+            )
+        }
+    );
+    return pp;
 }
-void parse_script(std::istream &is,
-    postproc::script &pp, postproc::context &ctx)
+postproc::script parse_script(std::istream &is, postproc::context &ctx)
 {
     postproc::parser p;
-    p.parse(is, pp, ctx);
+    return p.parse(is, ctx);
 }
-void parse_script(const std::string &st,
-    postproc::script &pp, postproc::context &ctx)
+postproc::script parse_script(const std::string &st, postproc::context &ctx)
 {
     std::istringstream is(st);
-    parse_script(is, pp, ctx);
+    return parse_script(is, ctx);
 }
 void run()
 {
-    postproc::map in_fields;
-
-    in_fields["CALL_TYPE"] = "MOBILE_ORIGINATED";
-    in_fields["CALLED_NUMBER"]  = "9041234578";
-    in_fields["CALLING_NUMBER"] = "9107557896";
-    in_fields["DURATION"] = "360";
-
+    postproc::map in_fields =
+    {
+        {"CALL_TYPE", "MOBILE_ORIGINATED"},
+        {"CALLED_NUMBER", "9041234578"},
+        {"CALLING_NUMBER", "9107557896"},
+        {"DURATION", "360"}
+    };
     //postproc::map out_fields(in_fields);
 
-    postproc::script pp;
     postproc_constants ppc;
     postproc::context ctx(ppc);
 
-    //make_script(pp);
+    //auto pp = make_script();
     std::ifstream script("script");
     if(!script.is_open()) throw mfi::exception("Couldn't open script file");
-    parse_script(script, pp, ctx);
+    auto pp = parse_script(script, ctx);
     std::cout << std::distance(pp.begin(), pp.end()) << " rules\n\n";
 
     if(pp.process(in_fields, in_fields/*out_fields*/, ctx))
     {
-        for(postproc::map::const_iterator it =
-                    //out_fields.begin(); it != out_fields.end(); ++it)
-                    in_fields.begin(); it != in_fields.end(); ++it)
-            std::cout << it->first << " : " << it->second << '\n';
+        for(auto &f : in_fields) //out_fields
+            std::cout << f.first << " : " << f.second << '\n';
     }
     else
         std::cout << "Rejected\n";

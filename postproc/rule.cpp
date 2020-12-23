@@ -3,15 +3,9 @@
 namespace postproc {
 
 //----------------------------------------------------------------------------
-rule::rule(std::unique_ptr<condition> &c, action &a)
-    : cond(c.release())
+rule::rule(unique_ptr<condition> c, action a)
+    : cond(std::move(c)), act(std::move(a))
 {
-    act.swap(a);
-}
-//----------------------------------------------------------------------------
-rule::~rule()
-{
-    delete cond;
 }
 //----------------------------------------------------------------------------
 rule::result_type rule::eval(

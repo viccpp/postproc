@@ -5,7 +5,7 @@
 namespace postproc {
 
 //----------------------------------------------------------------------------
-field::field(const std::string &n) : name(n)
+field::field(std::string n) : name(std::move(n))
 {
     mfi::ascii::toupper(name);
 }
@@ -32,7 +32,7 @@ session_constant::~session_constant()
 {
 }
 //----------------------------------------------------------------------------
-session_constant::session_constant(const std::string &n) : name(n)
+session_constant::session_constant(std::string n) : name(std::move(n))
 {
     mfi::ascii::toupper(name);
 }
@@ -43,8 +43,9 @@ std::string session_constant::value(const map & , const context &ctx) const
 }
 //----------------------------------------------------------------------------
 concatenation::concatenation(
-        std::unique_ptr<expression> &a1, std::unique_ptr<expression> &a2)
-    : arg1(a1), arg2(a2)
+    unique_ptr<expression> a1, unique_ptr<expression> a2)
+:
+    arg1(std::move(a1)), arg2(std::move(a2))
 {
 }
 //----------------------------------------------------------------------------

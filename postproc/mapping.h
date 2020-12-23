@@ -4,7 +4,6 @@
 #include<postproc/defs.h>
 #include<postproc/exprs.h>
 #include<unordered_map>
-#include<memory>
 #include<list>
 
 namespace postproc {
@@ -16,7 +15,7 @@ class mapping
 public:
     typedef std::list<std::pair<
         std::list<string_literal>,
-        std::unique_ptr<const expression>
+        unique_ptr<const expression>
     >> list;
 
     explicit mapping(list );

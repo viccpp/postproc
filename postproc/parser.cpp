@@ -16,7 +16,7 @@
 namespace postproc {
 
 //----------------------------------------------------------------------------
-const parser::name2func_t<function*(parser::*)()> parser::functions[] =
+const parser::funcs_t parser::functions[] =
 { // !! keep sorted by name
     { "BIT_AND", &parser::compile_func_bit_and },
     { "BIT_NOT", &parser::compile_func_bit_not },
@@ -49,7 +49,7 @@ const parser::name2func_t<function*(parser::*)()> parser::functions[] =
     { "UUID", &parser::compile_func_uuid }
 };
 //----------------------------------------------------------------------------
-const parser::name2func_t<predicate*(parser::*)()> parser::predicates[] =
+const parser::preds_t parser::predicates[] =
 { // !! keep sorted by name
     { "EMPTY", &parser::compile_pred_empty },
     { "GE", &parser::compile_pred_ge },
@@ -141,10 +141,12 @@ inline bool parser::is_integer_literal_first_char(char ch)
 //----------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------
-void parser::parse(std::istream &is, script &pp, context &ctx)
+script parser::parse(std::istream &is, context &ctx)
 {
+    script pp;
     r.init(is);
     while(read_script_elements(pp, ctx));
+    return pp;
 }
 //----------------------------------------------------------------------------
 bool parser::read_script_elements(script &pp, context &ctx)
@@ -161,22 +163,21 @@ bool parser::read_script_elements(script &pp, context &ctx)
 //----------------------------------------------------------------------------
 void parser::read_rule(script &pp)
 {
-    std::unique_ptr<condition> cond;
-    action act;
+    unique_ptr<condition> cond;
 
     // condition
     if(r.peek() != '{')
-        cond.reset(read_cond());
-    if(r.eof() && cond.get())
+        cond = read_cond();
+    if(r.eof() && cond)
         throw bad_syntax("Condition without action", r);
 
     // action
     if(r.peek() != '{')
         throw bad_syntax("Invalid condition", r);
     r.skip();
-    read_action(act);
+    auto act = read_action();
 
-    pp.add_rule(cond, act);
+    pp.add_rule(std::move(cond), std::move(act));
 }
 //----------------------------------------------------------------------------
 void parser::read_named_list_decl(context &ctx)
@@ -212,33 +213,32 @@ void parser::skip_parens()
     r.skip();
 }
 //----------------------------------------------------------------------------
-condition *parser::read_cond()
+unique_ptr<condition> parser::read_cond()
 {
     assert(!is_space(r.peek()));
-    std::unique_ptr<condition> cond;
+    unique_ptr<condition> cond;
     switch(r.peek())
     {
         case '(':
-            cond.reset(read_cond_parens());
+            cond = read_cond_parens();
             break;
         case '!':
-            cond.reset(read_cond_not());
+            cond = read_cond_not();
             break;
         case '?': // predicate
-            cond.reset(read_cond_predicate());
+            cond = read_cond_predicate();
             break;
         default: // binary cond-op
         {
-            std::unique_ptr<expression> expr(read_expr());
+            auto expr = read_expr();
             r.skip_ws();
-            mfi::string_buffer op;
-            read_bin_cond_op(op);
+            auto op = read_bin_cond_op();
             r.skip_ws();
-            cond.reset( read_rest_of_cond(expr, op) );
+            cond = read_rest_of_cond(std::move(expr), op);
         }
     }
     r.skip_ws();
-    if(r.eof()) return cond.release();
+    if(r.eof()) return cond;
 
     // Check for & or |
     // Warning: no priorities
@@ -248,25 +248,27 @@ condition *parser::read_cond()
         {
             r.skip();
             r.skip_ws();
-            std::unique_ptr<condition> cond2(read_cond());
-            std::unique_ptr<condition> cond1 = std::move(cond);
-            cond = std::make_unique<cond_and>(cond1, cond2);
+            auto cond2 = read_cond();
+            auto cond1 = std::move(cond);
+            cond = make_unique<cond_and>(
+                std::move(cond1), std::move(cond2));
             break;
         }
         case '|':
         {
             r.skip();
             r.skip_ws();
-            std::unique_ptr<condition> cond2(read_cond());
-            std::unique_ptr<condition> cond1 = std::move(cond);
-            cond = std::make_unique<cond_or>(cond1, cond2);
+            auto cond2 = read_cond();
+            auto cond1 = std::move(cond);
+            cond = make_unique<cond_or>(
+                std::move(cond1), std::move(cond2));
             break;
         }
     }
-    return cond.release();
+    return cond;
 }
 //----------------------------------------------------------------------------
-condition *parser::read_cond_atom()
+unique_ptr<condition> parser::read_cond_atom()
 {
     assert(!is_space(r.peek()));
     switch(r.peek())
@@ -278,28 +280,28 @@ condition *parser::read_cond_atom()
     throw bad_syntax("Expected (...) or predicate", r);
 }
 //----------------------------------------------------------------------------
-condition *parser::read_cond_parens()
+unique_ptr<condition> parser::read_cond_parens()
 {
     assert(r.peek() == '(');
     r.skip();
     r.skip_ws();
-    std::unique_ptr<condition> cond(read_cond());
+    auto cond = read_cond();
     r.skip_ws();
     if(r.peek() != ')') throw bad_syntax("Expected \")\"", r);
     r.skip();
-    return cond.release();
+    return cond;
 }
 //----------------------------------------------------------------------------
-condition *parser::read_cond_not()
+unique_ptr<condition> parser::read_cond_not()
 {
     assert(r.peek() == '!');
     r.skip();
     r.skip_ws();
-    std::unique_ptr<condition> cond(read_cond_atom());
-    return new cond_not(cond);
+    auto cond = read_cond_atom();
+    return make_unique<cond_not>(std::move(cond));
 }
 //----------------------------------------------------------------------------
-condition *parser::read_cond_predicate()
+unique_ptr<condition> parser::read_cond_predicate()
 {
     assert(r.peek() == '?');
     r.skip();
@@ -311,7 +313,7 @@ condition *parser::read_cond_predicate()
     return read_predicate(mfi::ascii::toupper(name));
 }
 //----------------------------------------------------------------------------
-void parser::read_bin_cond_op(std::string &op)
+std::string parser::read_bin_cond_op()
 {
     switch(r.peek())
     {
@@ -319,31 +321,26 @@ void parser::read_bin_cond_op(std::string &op)
             r.skip();
             if(r.peek() != '=') break;
             r.skip();
-            op = "==";
-            return;
+            return "==";
         case '~': // ~
             r.skip();
-            op = "~";
-            return;
+            return "~";
         case '!': // != or !~ or !in
             r.skip();
             switch(r.peek())
             {
                 case '=':
                     r.skip();
-                    op = "!=";
-                    return;
+                    return "!=";
                 case '~':
                     r.skip();
-                    op = "!~";
-                    return;
+                    return "!~";
                 case 'i':
                 case 'I':
                     r.skip();
                     if(mfi::ascii::tolower(r.peek()) != 'n') break;
                     r.skip();
-                    op = "!in";
-                    return;
+                    return "!in";
             }
             break;
         case 'i':
@@ -351,53 +348,53 @@ void parser::read_bin_cond_op(std::string &op)
             r.skip();
             if(mfi::ascii::tolower(r.peek()) != 'n') break;
             r.skip();
-            op = "in";
-            return;
+            return "in";
     }
     throw bad_syntax("Expected binary conditional operation", r);
 }
 //----------------------------------------------------------------------------
-condition *parser::read_rest_of_cond(
-    std::unique_ptr<expression> &arg1, const std::string &op)
+unique_ptr<condition> parser::read_rest_of_cond(
+    unique_ptr<expression> arg1, const std::string &op)
 {
     assert(!is_space(r.peek()));
     if(op == "==")
     {
-        std::unique_ptr<expression> arg2(read_expr());
-        return new equal(arg1, arg2);
+        auto arg2 = read_expr();
+        return make_unique<equal>(std::move(arg1), std::move(arg2));
     }
     else if(op == "!=")
     {
-        std::unique_ptr<expression> arg2(read_expr());
-        return new not_equal(arg1, arg2);
+        auto arg2 = read_expr();
+        return make_unique<not_equal>(std::move(arg1), std::move(arg2));
     }
     else if(op == "in")
     {
-        std::unique_ptr<string_list> strs(read_string_list());
-        return new in_set(arg1, strs);
+        auto strs = read_string_list();
+        return make_unique<in_set>(std::move(arg1), std::move(strs));
     }
     else if(op == "!in")
     {
-        std::unique_ptr<string_list> strs(read_string_list());
-        return new not_in_set(arg1, strs);
+        auto strs = read_string_list();
+        return make_unique<not_in_set>(std::move(arg1), std::move(strs));
     }
     else if(op == "~")
     {
         auto re = read_regexp();
-        return new match_regexp(arg1, std::move(re));
+        return make_unique<match_regexp>(std::move(arg1), std::move(re));
     }
     else if(op == "!~")
     {
         auto re = read_regexp();
-        return new not_match_regexp(arg1, std::move(re));
+        return make_unique<not_match_regexp>(std::move(arg1), std::move(re));
     }
     // must not be reached!
     throw bad_syntax("Invalid binary conditional operation", r);
 }
 //----------------------------------------------------------------------------
-void parser::read_action(action &act)
+action parser::read_action()
 {
     r.skip_ws();
+    action act;
     for(;;)
     {
         act.push_back(read_op());
@@ -406,20 +403,20 @@ void parser::read_action(action &act)
         {
             case '}':
                 r.skip();
-                return;
+                return act;
             case ';':
                 r.skip();
                 r.skip_ws();
                 if(r.peek() != '}') break;
                 r.skip();
-                return;
+                return act;
             //default:
             //    throw bad_syntax("Expected \"}\" or \";\" or end-of-line", r);
         }
     }
 }
 //----------------------------------------------------------------------------
-operation *parser::read_op()
+unique_ptr<operation> parser::read_op()
 {
     std::string ident;
 
@@ -434,15 +431,23 @@ operation *parser::read_op()
 
     if(ident == "DISCARD")
     {
-        if(r.peek() == '(') { skip_parens(); return new discard; }
+        if(r.peek() == '(')
+        {
+            skip_parens();
+            return make_unique<discard>();
+        }
     }
     else if(ident == "BREAK")
     {
-        if(r.peek() == '(') { skip_parens(); return new break_; }
+        if(r.peek() == '(')
+        {
+            skip_parens();
+            return make_unique<break_>();
+        }
     }
 
     // ident is a field name (assignment or swap op)
-    std::unique_ptr<field> f( new field(ident) );
+    auto f = make_unique<field>(ident);
     switch(r.peek())
     {
         case '<': // swap or assignment...
@@ -456,8 +461,8 @@ operation *parser::read_op()
                 r.skip_ws();
                 ident.clear();
                 ident = read_identifier();
-                std::unique_ptr<field> f2( new field(ident) );
-                return new swap_op(f, f2);
+                auto f2 = make_unique<field>(ident);
+                return make_unique<swap_op>(std::move(f), std::move(f2));
             }
             // fall through
         }
@@ -465,27 +470,27 @@ operation *parser::read_op()
         {
             r.skip();
             r.skip_ws();
-            std::unique_ptr<expression> expr(read_expr());
-            return new assignment(f, expr);
+            auto expr = read_expr();
+            return make_unique<assignment>(std::move(f), std::move(expr));
         }
     }
     throw bad_syntax("Expected \"=\", \"<-\" or \"<->\" after field name", r);
 }
 //----------------------------------------------------------------------------
-expression *parser::read_expr()
+unique_ptr<expression> parser::read_expr()
 {
-    std::unique_ptr<expression> expr1( read_simple_expr() );
+    auto expr1 = read_simple_expr();
     r.skip_ws();
-    if(r.eof() || r.peek() != '.') return expr1.release();
+    if(r.eof() || r.peek() != '.') return expr1;
     // It's concatenation
     r.skip();
     r.skip_ws();
-    std::unique_ptr<expression> expr2( read_expr() );
-    return new concatenation(expr1, expr2);
+    auto expr2 = read_expr();
+    return make_unique<concatenation>(std::move(expr1), std::move(expr2));
 }
 //----------------------------------------------------------------------------
 // Expression without concatenation
-expression *parser::read_simple_expr()
+unique_ptr<expression> parser::read_simple_expr()
 {
     char ch = r.peek();
     assert(!is_space(ch));
@@ -498,7 +503,7 @@ expression *parser::read_simple_expr()
         case '$': // session constant
         {
             r.skip();
-            return new session_constant(read_identifier());
+            return make_unique<session_constant>(read_identifier());
         }
     }
     if(is_ident_first_char(ch)) // field or function
@@ -511,7 +516,7 @@ expression *parser::read_simple_expr()
             return read_function(mfi::ascii::toupper(name));
         }
         else // field
-            return new field(name);
+            return make_unique<field>(name);
     }
     if(is_integer_literal_first_char(ch)) // integer literal
     {
@@ -539,7 +544,7 @@ std::string parser::read_identifier()
     {
         // ignore
     }
-    return st;
+    return std::move(st);
 }
 //----------------------------------------------------------------------------
 regexp parser::read_regexp()
@@ -570,7 +575,7 @@ regexp parser::read_regexp()
     }
 }
 //----------------------------------------------------------------------------
-string_list *parser::read_string_list()
+unique_ptr<string_list> parser::read_string_list()
 {
     r.skip_ws();
     switch(r.peek())
@@ -579,7 +584,7 @@ string_list *parser::read_string_list()
             return read_list_literal();
         case '@':
             r.skip();
-            return new named_list(read_identifier());
+            return make_unique<named_list>(read_identifier());
         default:
             throw bad_syntax("Expected list", r);
     }
@@ -592,9 +597,7 @@ void parser::read_list_literal(std::list<string_literal> &set)
     for(;;)
     {
         r.skip_ws();
-        std::unique_ptr<string_literal> s(read_string_literal());
-        set.push_back(*s);
-        s.release();
+        set.push_back(std::move(*read_string_literal()));
         r.skip_ws();
         char ch = r.get();
         if(ch == ')') break;
@@ -603,27 +606,25 @@ void parser::read_list_literal(std::list<string_literal> &set)
     }
 }
 //----------------------------------------------------------------------------
-list_literal *parser::read_list_literal()
+unique_ptr<list_literal> parser::read_list_literal()
 {
     std::list<string_literal> set;
     read_list_literal(set);
-    return new list_literal(set);
+    return make_unique<list_literal>(std::move(set));
 }
 //----------------------------------------------------------------------------
-string_literal *parser::read_string_literal()
+unique_ptr<string_literal> parser::read_string_literal()
 {
     char ch = r.peek();
     assert(!is_space(ch));
     if(ch == '"')
         return read_quoted_string();
     if(is_integer_literal_first_char(ch))
-    {
         return read_integer_literal();
-    }
     throw bad_syntax("Expected string literal", r);
 }
 //----------------------------------------------------------------------------
-string_literal *parser::read_quoted_string()
+unique_ptr<string_literal> parser::read_quoted_string()
 {
     assert(r.peek() == '"');
     r.skip();
@@ -634,7 +635,7 @@ string_literal *parser::read_quoted_string()
         switch(ch)
         {
             case '"':
-                return new string_literal(st);
+                return make_unique<string_literal>(std::move(st));
             case '\\':
                 ch = r.get();
                 if(ch == 'x') // HEX escape sequence
@@ -656,7 +657,7 @@ string_literal *parser::read_quoted_string()
     }
 }
 //----------------------------------------------------------------------------
-integer_literal *parser::read_integer_literal()
+unique_ptr<integer_literal> parser::read_integer_literal()
 {
     char ch = r.get();
     assert(!is_space(ch));
@@ -676,13 +677,13 @@ integer_literal *parser::read_integer_literal()
     {
         // ignore
     }
-    return new integer_literal(st);
+    return make_unique<integer_literal>(std::move(st));
 }
 //----------------------------------------------------------------------------
 template<class FuncRec, size_t Sz>
 bool parser::is_ascending(const FuncRec (&table)[Sz])
 {
-    typedef char assert_array_has_non_zero_size[Sz != 0 ? 1 : -1];
+    static_assert(Sz != 0, "Non-zero-sized array is excepted");
     const FuncRec *p = table + 1, *end = table + Sz;
     for(; p != end; ++p)
         if(std::strcmp((p-1)->name, p->name) >= 0) return false;
@@ -707,16 +708,16 @@ inline typename FuncRec::func_t parser::find_func(
     return nullptr;
 }
 //----------------------------------------------------------------------------
-function *parser::read_function(const std::string &name)
+unique_ptr<function> parser::read_function(const std::string &name)
 {
-    function *(parser::*func)() = find_func(functions, name);
+    auto func = find_func(functions, name);
     if(!func) throw bad_syntax("Unknown function", r);
     return (this->*func)();
 }
 //----------------------------------------------------------------------------
-predicate *parser::read_predicate(const std::string &name)
+unique_ptr<predicate> parser::read_predicate(const std::string &name)
 {
-    predicate *(parser::*func)() = find_func(predicates, name);
+    auto func = find_func(predicates, name);
     if(!func) throw bad_syntax("Unknown predicate", r);
     return (this->*func)();
 }
@@ -726,10 +727,10 @@ inline void parser::throw_invalid_func_arg(const reader &r)
     throw bad_syntax("Invalid argument list", r);
 }
 //----------------------------------------------------------------------------
-std::unique_ptr<expression> parser::read_func_arg(char delim)
+unique_ptr<expression> parser::read_func_arg(char delim)
 {
     r.skip_ws();
-    std::unique_ptr<expression> arg(read_expr());
+    auto arg = read_expr();
     r.skip_ws();
     if(r.peek() != delim) throw_invalid_func_arg(r);
     r.skip();
@@ -746,78 +747,80 @@ regexp parser::read_func_arg_re(char delim)
     return arg;
 }
 //----------------------------------------------------------------------------
-std::unique_ptr<string_list> parser::read_func_arg_list(char delim)
+unique_ptr<string_list> parser::read_func_arg_list(char delim)
 {
-    std::unique_ptr<string_list> arg(read_string_list());
+    auto arg = read_string_list();
     r.skip_ws();
     if(r.peek() != delim) throw_invalid_func_arg(r);
     r.skip();
     return arg;
 }
 //----------------------------------------------------------------------------
-std::unique_ptr<string_literal> parser::read_func_arg_literal(char delim)
+unique_ptr<string_literal> parser::read_func_arg_literal(char delim)
 {
     r.skip_ws();
-    std::unique_ptr<string_literal> str(read_string_literal());
+    auto str = read_string_literal();
     r.skip_ws();
     if(r.peek() != delim) throw_invalid_func_arg(r);
     r.skip();
     return str;
 }
 //----------------------------------------------------------------------------
-predicate *parser::compile_pred_empty()
+unique_ptr<predicate> parser::compile_pred_empty()
 {
-    std::unique_ptr<expression> arg = read_func_arg();
-    return new predicates::empty(arg);
+    auto arg = read_func_arg();
+    return make_unique<predicates::empty>(std::move(arg));
 }
 //----------------------------------------------------------------------------
-predicate *parser::compile_pred_starts_with()
+unique_ptr<predicate> parser::compile_pred_starts_with()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg();
-    return new predicates::starts_with(arg1, arg2);
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg();
+    return make_unique<predicates::starts_with>(
+        std::move(arg1), std::move(arg2));
 }
 //----------------------------------------------------------------------------
-predicate *parser::compile_pred_lt()
+unique_ptr<predicate> parser::compile_pred_lt()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg();
-    return new predicates::lt(arg1, arg2);
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg();
+    return make_unique<predicates::lt>(std::move(arg1), std::move(arg2));
 }
 //----------------------------------------------------------------------------
-predicate *parser::compile_pred_gt()
+unique_ptr<predicate> parser::compile_pred_gt()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg();
-    return new predicates::gt(arg1, arg2);
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg();
+    return make_unique<predicates::gt>(std::move(arg1), std::move(arg2));
 }
 //----------------------------------------------------------------------------
-predicate *parser::compile_pred_le()
+unique_ptr<predicate> parser::compile_pred_le()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg();
-    return new predicates::le(arg1, arg2);
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg();
+    return make_unique<predicates::le>(std::move(arg1), std::move(arg2));
 }
 //----------------------------------------------------------------------------
-predicate *parser::compile_pred_ge()
+unique_ptr<predicate> parser::compile_pred_ge()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg();
-    return new predicates::ge(arg1, arg2);
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg();
+    return make_unique<predicates::ge>(std::move(arg1), std::move(arg2));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_length()
+unique_ptr<function> parser::compile_func_length()
 {
-    std::unique_ptr<expression> arg = read_func_arg();
-    return new functions::length(arg);
+    auto arg = read_func_arg();
+    return make_unique<functions::length>(std::move(arg));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_substr()
+unique_ptr<function> parser::compile_func_substr()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(',');
+    auto arg1 = read_func_arg(',');
     // 2nd arg may be last may be not
     r.skip_ws();
-    std::unique_ptr<expression> arg2(read_expr()), arg3;
+    auto arg2 = read_expr();
+    unique_ptr<expression> arg3;
     r.skip_ws();
     if(r.peek() == ')') r.skip(); // only 2 arguments
     else
@@ -826,62 +829,65 @@ function *parser::compile_func_substr()
         r.skip();
         arg3 = read_func_arg();
     }
-    return new functions::substr(arg1, arg2, arg3);
+    return make_unique<functions::substr>(
+        std::move(arg1), std::move(arg2), std::move(arg3));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_replace()
+unique_ptr<function> parser::compile_func_replace()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(',');
-    auto                        arg2 = read_func_arg_re(',');
-    std::unique_ptr<expression> arg3 = read_func_arg();
-    return new functions::replace(arg1, std::move(arg2), arg3);
+    auto arg1 = read_func_arg(',');
+    auto arg2 = read_func_arg_re(',');
+    auto arg3 = read_func_arg();
+    return make_unique<functions::replace>(
+        std::move(arg1), std::move(arg2), std::move(arg3));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_replace_all()
+unique_ptr<function> parser::compile_func_replace_all()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(',');
-    auto                        arg2 = read_func_arg_re(',');
-    std::unique_ptr<expression> arg3 = read_func_arg();
-    return new functions::replace_all(arg1, std::move(arg2), arg3);
+    auto arg1 = read_func_arg(',');
+    auto arg2 = read_func_arg_re(',');
+    auto arg3 = read_func_arg();
+    return make_unique<functions::replace_all>(
+        std::move(arg1), std::move(arg2), std::move(arg3));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_upper()
+unique_ptr<function> parser::compile_func_upper()
 {
-    std::unique_ptr<expression> arg = read_func_arg();
-    return new functions::upper(arg);
+    auto arg = read_func_arg();
+    return make_unique<functions::upper>(std::move(arg));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_lower()
+unique_ptr<function> parser::compile_func_lower()
 {
-    std::unique_ptr<expression> arg = read_func_arg();
-    return new functions::lower(arg);
+    auto arg = read_func_arg();
+    return make_unique<functions::lower>(std::move(arg));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_reverse()
+unique_ptr<function> parser::compile_func_reverse()
 {
-    std::unique_ptr<expression> arg = read_func_arg();
-    return new functions::reverse(arg);
+    auto arg = read_func_arg();
+    return make_unique<functions::reverse>(std::move(arg));
 }
 //----------------------------------------------------------------------------
 template<class F_1Arg, class F_2Arg>
-inline function *parser::compile_trimlike_func()
+inline unique_ptr<function> parser::compile_trimlike_func()
 {
-    std::unique_ptr<expression> arg(read_expr());
+    auto arg = read_expr();
     r.skip_ws();
     if(r.peek() == ')') // only 1 argument
     {
         r.skip();
-        return new F_1Arg(arg);
+        return make_unique<F_1Arg>(std::move(arg));
     }
     if(r.peek() != ',') throw_invalid_func_arg(r);
     r.skip();
 
     // Read second argument
-    std::unique_ptr<string_literal> chars = read_func_arg_literal();
-    return new F_2Arg(arg, *chars);
+    auto chars = read_func_arg_literal();
+    return make_unique<F_2Arg>(std::move(arg), std::move(*chars));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_ltrim()
+unique_ptr<function> parser::compile_func_ltrim()
 {
     return compile_trimlike_func<
         functions::ltrim_spaces,
@@ -889,7 +895,7 @@ function *parser::compile_func_ltrim()
     >();
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_rtrim()
+unique_ptr<function> parser::compile_func_rtrim()
 {
     return compile_trimlike_func<
         functions::rtrim_spaces,
@@ -897,7 +903,7 @@ function *parser::compile_func_rtrim()
     >();
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_trim()
+unique_ptr<function> parser::compile_func_trim()
 {
     return compile_trimlike_func<
         functions::trim_spaces,
@@ -905,46 +911,47 @@ function *parser::compile_func_trim()
     >();
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_lpad()
+unique_ptr<function> parser::compile_func_lpad()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg(',');
-    std::unique_ptr<string_literal> pad_char = read_func_arg_literal();
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg(',');
+    auto pad_char = read_func_arg_literal();
     if(pad_char->length() != 1)
         throw bad_syntax("Expected one char string literal", r);
-    return new functions::lpad(arg1, arg2, *pad_char->begin());
+    return make_unique<functions::lpad>(
+        std::move(arg1), std::move(arg2), pad_char->front());
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_hex2dec()
+unique_ptr<function> parser::compile_func_hex2dec()
 {
-    std::unique_ptr<expression> arg = read_func_arg();
-    return new functions::hex2dec(arg);
+    auto arg = read_func_arg();
+    return make_unique<functions::hex2dec>(std::move(arg));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_dec2hex()
+unique_ptr<function> parser::compile_func_dec2hex()
 {
-    std::unique_ptr<expression> arg = read_func_arg();
-    return new functions::dec2hex(arg);
+    auto arg = read_func_arg();
+    return make_unique<functions::dec2hex>(std::move(arg));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_map()
+unique_ptr<function> parser::compile_func_map()
 {
-    std::unique_ptr<expression> value = read_func_arg(',');
+    auto value = read_func_arg(',');
     mapping::list mapping;
 
     r.skip_ws();
     if(r.peek() != '(') bad_syntax("Expected list literal", r);
     do {
-        mapping.resize(mapping.size() + 1);
-        mapping.back().second = nullptr;
+        mapping.emplace_back();
+        auto &m = mapping.back();
 
-        read_list_literal(mapping.back().first);
+        read_list_literal(m.first);
         r.skip_ws();
         if(r.peek() != '-' || (r.skip(), r.peek()) != '>')
             bad_syntax("Expected \"->\"", r);
         r.skip();
         r.skip_ws();
-        mapping.back().second.reset( read_expr() );
+        m.second = read_expr();
 
         r.skip_ws();
         char ch = r.peek();
@@ -954,117 +961,118 @@ function *parser::compile_func_map()
         r.skip_ws();
     } while(r.peek() == '(');
 
-    std::unique_ptr<expression> def_value;
+    unique_ptr<expression> def_value;
     if(r.peek() != ')') // default value is presented
     {
-        def_value.reset(read_expr());
+        def_value = read_expr();
         r.skip_ws();
         if(r.peek() != ')') bad_syntax("Expected \")\"", r);
     }
     r.skip(); // )
-    return new functions::map_func(value, std::move(mapping), def_value);
+    return make_unique<functions::map_func>(
+        std::move(value), std::move(mapping), std::move(def_value));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_iadd()
+unique_ptr<function> parser::compile_func_iadd()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg();
-    return new functions::iadd(arg1, arg2);
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg();
+    return make_unique<functions::iadd>(std::move(arg1), std::move(arg2));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_isub()
+unique_ptr<function> parser::compile_func_isub()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg();
-    return new functions::isub(arg1, arg2);
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg();
+    return make_unique<functions::isub>(std::move(arg1), std::move(arg2));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_idiv()
+unique_ptr<function> parser::compile_func_idiv()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg();
-    return new functions::idiv(arg1, arg2);
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg();
+    return make_unique<functions::idiv>(std::move(arg1), std::move(arg2));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_idiv_ceil()
+unique_ptr<function> parser::compile_func_idiv_ceil()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg();
-    return new functions::idiv_ceil(arg1, arg2);
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg();
+    return make_unique<functions::idiv_ceil>(std::move(arg1), std::move(arg2));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_imul()
+unique_ptr<function> parser::compile_func_imul()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg();
-    return new functions::imul(arg1, arg2);
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg();
+    return make_unique<functions::imul>(std::move(arg1), std::move(arg2));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_sift()
+unique_ptr<function> parser::compile_func_sift()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(',');
-    std::unique_ptr<string_literal> chars = read_func_arg_literal();
-    return new functions::sift(arg1, *chars);
+    auto arg1 = read_func_arg(',');
+    auto chars = read_func_arg_literal();
+    return make_unique<functions::sift>(std::move(arg1), std::move(*chars));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_sift_nonprint()
+unique_ptr<function> parser::compile_func_sift_nonprint()
 {
-    std::unique_ptr<expression> arg = read_func_arg();
-    return new functions::sift_nonprint(arg);
+    auto arg = read_func_arg();
+    return make_unique<functions::sift_nonprint>(std::move(arg));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_bit_and()
+unique_ptr<function> parser::compile_func_bit_and()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg();
-    return new functions::bit_and(arg1, arg2);
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg();
+    return make_unique<functions::bit_and>(std::move(arg1), std::move(arg2));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_bit_or()
+unique_ptr<function> parser::compile_func_bit_or()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg();
-    return new functions::bit_or(arg1, arg2);
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg();
+    return make_unique<functions::bit_or>(std::move(arg1), std::move(arg2));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_bit_shl()
+unique_ptr<function> parser::compile_func_bit_shl()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg();
-    return new functions::bit_shl(arg1, arg2);
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg();
+    return make_unique<functions::bit_shl>(std::move(arg1), std::move(arg2));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_bit_shr()
+unique_ptr<function> parser::compile_func_bit_shr()
 {
-    std::unique_ptr<expression> arg1 = read_func_arg(','),
-                                arg2 = read_func_arg();
-    return new functions::bit_shr(arg1, arg2);
+    auto arg1 = read_func_arg(','),
+         arg2 = read_func_arg();
+    return make_unique<functions::bit_shr>(std::move(arg1), std::move(arg2));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_bit_not()
+unique_ptr<function> parser::compile_func_bit_not()
 {
-    std::unique_ptr<expression> arg = read_func_arg();
-    return new functions::bit_not(arg);
+    auto arg = read_func_arg();
+    return make_unique<functions::bit_not>(std::move(arg));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_ip6_to_ip4()
+unique_ptr<function> parser::compile_func_ip6_to_ip4()
 {
-    std::unique_ptr<expression> arg = read_func_arg();
-    return new functions::ip6_to_ip4(arg);
+    auto arg = read_func_arg();
+    return make_unique<functions::ip6_to_ip4>(std::move(arg));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_ip4_to_hex()
+unique_ptr<function> parser::compile_func_ip4_to_hex()
 {
-    std::unique_ptr<expression> arg = read_func_arg();
-    return new functions::ip4_to_hex(arg);
+    auto arg = read_func_arg();
+    return make_unique<functions::ip4_to_hex>(std::move(arg));
 }
 //----------------------------------------------------------------------------
-function *parser::compile_func_uuid()
+unique_ptr<function> parser::compile_func_uuid()
 {
     r.skip_ws();
     if(r.peek() != ')') throw_invalid_func_arg(r);
     r.skip();
-    return new functions::uuid;
+    return make_unique<functions::uuid>();
 }
 //----------------------------------------------------------------------------
 

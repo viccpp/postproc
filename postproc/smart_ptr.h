@@ -7,6 +7,9 @@
 
 namespace postproc {
 
+using std::unique_ptr;
+using std::make_unique;
+
 enum not_null_t { not_null }; // constructor tag
 //////////////////////////////////////////////////////////////////////////////
 // Never NULL non-copyable unique_ptr-like class
@@ -16,7 +19,7 @@ class not_null_ptr
     T *p;
 public:
     template<class Q>
-    explicit not_null_ptr(std::unique_ptr<Q> &ptr) : p(ptr.get())
+    explicit not_null_ptr(unique_ptr<Q> ptr) : p(ptr.get())
         { if(!p) throw null_pointer(); ptr.release(); }
     // Constructor w/o check!
     not_null_ptr(not_null_t, T *ptr) : p(ptr) { assert(ptr); }

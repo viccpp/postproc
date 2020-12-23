@@ -2,6 +2,8 @@
 #define POSTPROC_ACTION_H
 
 #include<postproc/operation.h>
+#include<postproc/smart_ptr.h>
+#include<initializer_list>
 #include<vector>
 
 namespace postproc {
@@ -9,25 +11,25 @@ namespace postproc {
 //////////////////////////////////////////////////////////////////////////////
 class action
 {
-    typedef std::vector<operation*> cont_t;
-    cont_t ops;
-    void free_pointers();
+    std::vector<unique_ptr<operation>> ops;
 public:
     typedef operation::result_type result_type;
 
-    action() = default;
-    action(const action &) = delete;
-    action &operator=(const action &) = delete;
-    ~action();
+    template<class... OpPtr>
+    action(OpPtr&&... op)
+    {
+        (void) std::initializer_list<char>{
+            (push_back(std::move(op)), '\0')...
+        };
+    }
 
-    typedef cont_t::const_iterator const_iterator;
-    const_iterator begin() const { return ops.begin(); }
-    const_iterator end() const { return ops.end(); }
+    auto begin() const { return ops.begin(); }
+    auto end() const { return ops.end(); }
 
     bool empty() const { return ops.empty(); }
-    void clear();
+    void clear() { ops.clear(); }
 
-    void push_back(operation *op) { ops.push_back(op); }
+    void push_back(unique_ptr<operation> op) { ops.push_back(std::move(op)); }
     void swap(action &o) { ops.swap(o.ops); }
 
     result_type eval(const map & , map & , const context & ) const;

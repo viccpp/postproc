@@ -3,7 +3,7 @@
 namespace postproc { namespace predicates {
 
 //----------------------------------------------------------------------------
-empty::empty(std::unique_ptr<expression> &str) : arg(str)
+empty::empty(unique_ptr<expression> str) : arg(std::move(str))
 {
 }
 //----------------------------------------------------------------------------
@@ -17,8 +17,9 @@ bool empty::eval(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 starts_with::starts_with(
-            std::unique_ptr<expression> &str, std::unique_ptr<expression> &pref)
-    : arg1(str), arg2(pref)
+    unique_ptr<expression> str, unique_ptr<expression> pref)
+:
+    arg1(std::move(str)), arg2(std::move(pref))
 {
 }
 //----------------------------------------------------------------------------
@@ -35,8 +36,8 @@ bool starts_with::eval(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char lt::func[] = "lt";
-lt::lt(std::unique_ptr<expression> &n1, std::unique_ptr<expression> &n2)
-    : arg1(n1), arg2(n2)
+lt::lt(unique_ptr<expression> n1, unique_ptr<expression> n2)
+    : arg1(std::move(n1)), arg2(std::move(n2))
 {
 }
 //----------------------------------------------------------------------------
@@ -50,8 +51,8 @@ bool lt::eval(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char gt::func[] = "gt";
-gt::gt(std::unique_ptr<expression> &n1, std::unique_ptr<expression> &n2)
-    : arg1(n1), arg2(n2)
+gt::gt(unique_ptr<expression> n1, unique_ptr<expression> n2)
+    : arg1(std::move(n1)), arg2(std::move(n2))
 {
 }
 //----------------------------------------------------------------------------
@@ -65,8 +66,8 @@ bool gt::eval(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char le::func[] = "le";
-le::le(std::unique_ptr<expression> &n1, std::unique_ptr<expression> &n2)
-    : arg1(n1), arg2(n2)
+le::le(unique_ptr<expression> n1, unique_ptr<expression> n2)
+    : arg1(std::move(n1)), arg2(std::move(n2))
 {
 }
 //----------------------------------------------------------------------------
@@ -80,8 +81,8 @@ bool le::eval(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char ge::func[] = "ge";
-ge::ge(std::unique_ptr<expression> &n1, std::unique_ptr<expression> &n2)
-    : arg1(n1), arg2(n2)
+ge::ge(unique_ptr<expression> n1, unique_ptr<expression> n2)
+    : arg1(std::move(n1)), arg2(std::move(n2))
 {
 }
 //----------------------------------------------------------------------------

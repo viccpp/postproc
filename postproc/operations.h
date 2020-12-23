@@ -12,7 +12,7 @@ class assignment : public operation
     not_null_ptr<field> fld;
     argument expr;
 public:
-    assignment(std::unique_ptr<field> & , std::unique_ptr<expression> & );
+    assignment(unique_ptr<field> , unique_ptr<expression> );
     ~assignment();
 
     result_type eval(const map & , map & , const context & ) const override;
@@ -22,7 +22,7 @@ class swap_op : public operation
 {
     not_null_ptr<field> f1, f2;
 public:
-    swap_op(std::unique_ptr<field> & , std::unique_ptr<field> & );
+    swap_op(unique_ptr<field> , unique_ptr<field> );
     ~swap_op();
 
     result_type eval(const map & , map & , const context & ) const override;

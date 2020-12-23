@@ -3,7 +3,7 @@
 namespace postproc {
 
 //----------------------------------------------------------------------------
-script::script() : tail(rules.before_begin())
+script::script()
 {
 }
 //----------------------------------------------------------------------------
@@ -11,9 +11,9 @@ script::~script()
 {
 }
 //----------------------------------------------------------------------------
-void script::add_rule(std::unique_ptr<condition> &cond, action &act)
+void script::add_rule(unique_ptr<condition> cond, action act)
 {
-    tail = rules.emplace_after(tail, cond, act);
+    tail = rules.emplace_after(tail, std::move(cond), std::move(act));
 }
 //----------------------------------------------------------------------------
 bool script::process(
@@ -25,6 +25,7 @@ bool script::process(
         {
             case operation_result::break_script:   return true;
             case operation_result::discard_record: return false;
+            default:; // eval next
         }
         // TODO: copy out_fields to input ??
     }

@@ -9,13 +9,12 @@
 #include<mfisoft/uuid.h>
 #include<stdexcept>
 #include<cstdlib> // for abs() and div()
-#include<cctype>
 #include<algorithm>
 
 namespace postproc { namespace functions {
 
 //----------------------------------------------------------------------------
-length::length(std::unique_ptr<expression> &e) : arg(e)
+length::length(unique_ptr<expression> e) : arg(std::move(e))
 {
 }
 //----------------------------------------------------------------------------
@@ -29,10 +28,11 @@ std::string length::value(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char substr::func[] = "substr";
-substr::substr(std::unique_ptr<expression> &str,
-    std::unique_ptr<expression> &off, std::unique_ptr<expression> &cnt)
+substr::substr(unique_ptr<expression> str,
+    unique_ptr<expression> off, unique_ptr<expression> cnt)
 :
-    str_expr(str), off_expr(off), count_expr(cnt, std::string::npos)
+    str_expr(std::move(str)), off_expr(std::move(off)),
+    count_expr(std::move(cnt), std::string::npos)
 {
 }
 //----------------------------------------------------------------------------
@@ -54,10 +54,10 @@ std::string substr::value(const map &fields, const context &ctx) const
     );
 }
 //----------------------------------------------------------------------------
-replace_base_::replace_base_(std::unique_ptr<expression> &str,
-    regexp re, std::unique_ptr<expression> &repl)
+replace_base_::replace_base_(
+    unique_ptr<expression> str, regexp re, unique_ptr<expression> repl)
 :
-    str_expr(str), re(std::move(re)), rep_text(repl)
+    str_expr(std::move(str)), re(std::move(re)), rep_text(std::move(repl))
 {
 }
 //----------------------------------------------------------------------------
@@ -65,10 +65,10 @@ replace_base_::~replace_base_()
 {
 }
 //----------------------------------------------------------------------------
-replace::replace(std::unique_ptr<expression> &str,
-    regexp re, std::unique_ptr<expression> &repl)
+replace::replace(
+    unique_ptr<expression> str, regexp re, unique_ptr<expression> repl)
 :
-    replace_base_(str, std::move(re), repl)
+    replace_base_(std::move(str), std::move(re), std::move(repl))
 {
 }
 //----------------------------------------------------------------------------
@@ -82,10 +82,10 @@ std::string replace::value(const map &fields, const context &ctx) const
         str_expr.value(fields, ctx), rep_text.value(fields, ctx));
 }
 //----------------------------------------------------------------------------
-replace_all::replace_all(std::unique_ptr<expression> &str,
-    regexp re, std::unique_ptr<expression> &repl)
+replace_all::replace_all(
+    unique_ptr<expression> str, regexp re, unique_ptr<expression> repl)
 :
-    replace_base_(str, std::move(re), repl)
+    replace_base_(std::move(str), std::move(re), std::move(repl))
 {
 }
 //----------------------------------------------------------------------------
@@ -99,7 +99,7 @@ std::string replace_all::value(const map &fields, const context &ctx) const
         str_expr.value(fields, ctx), rep_text.value(fields, ctx));
 }
 //----------------------------------------------------------------------------
-upper::upper(std::unique_ptr<expression> &e) : arg(e)
+upper::upper(unique_ptr<expression> e) : arg(std::move(e))
 {
 }
 //----------------------------------------------------------------------------
@@ -113,7 +113,7 @@ std::string upper::value(const map &fields, const context &ctx) const
     return mfi::ascii::toupper(res);
 }
 //----------------------------------------------------------------------------
-lower::lower(std::unique_ptr<expression> &e) : arg(e)
+lower::lower(unique_ptr<expression> e) : arg(std::move(e))
 {
 }
 //----------------------------------------------------------------------------
@@ -127,7 +127,7 @@ std::string lower::value(const map &fields, const context &ctx) const
     return mfi::ascii::tolower(res);
 }
 //----------------------------------------------------------------------------
-reverse::reverse(std::unique_ptr<expression> &e) : arg(e)
+reverse::reverse(unique_ptr<expression> e) : arg(std::move(e))
 {
 }
 //----------------------------------------------------------------------------
@@ -142,8 +142,8 @@ std::string reverse::value(const map &fields, const context &ctx) const
     return res;
 }
 //----------------------------------------------------------------------------
-ltrim::ltrim(std::unique_ptr<expression> &a, const std::string &chrs)
-    : arg(a), chars(chrs)
+ltrim::ltrim(unique_ptr<expression> a, std::string chrs)
+    : arg(std::move(a)), chars(std::move(chrs))
 {
 }
 //----------------------------------------------------------------------------
@@ -158,7 +158,7 @@ std::string ltrim::value(const map &fields, const context &ctx) const
     return res;
 }
 //----------------------------------------------------------------------------
-ltrim_spaces::ltrim_spaces(std::unique_ptr<expression> &a) : arg(a)
+ltrim_spaces::ltrim_spaces(unique_ptr<expression> a) : arg(std::move(a))
 {
 }
 //----------------------------------------------------------------------------
@@ -173,8 +173,8 @@ std::string ltrim_spaces::value(const map &fields, const context &ctx) const
     return res;
 }
 //----------------------------------------------------------------------------
-rtrim::rtrim(std::unique_ptr<expression> &a, const std::string &chrs)
-    : arg(a), chars(chrs)
+rtrim::rtrim(unique_ptr<expression> a, std::string chrs)
+    : arg(std::move(a)), chars(std::move(chrs))
 {
 }
 //----------------------------------------------------------------------------
@@ -189,7 +189,7 @@ std::string rtrim::value(const map &fields, const context &ctx) const
     return res;
 }
 //----------------------------------------------------------------------------
-rtrim_spaces::rtrim_spaces(std::unique_ptr<expression> &a) : arg(a)
+rtrim_spaces::rtrim_spaces(unique_ptr<expression> a) : arg(std::move(a))
 {
 }
 //----------------------------------------------------------------------------
@@ -204,8 +204,8 @@ std::string rtrim_spaces::value(const map &fields, const context &ctx) const
     return res;
 }
 //----------------------------------------------------------------------------
-trim::trim(std::unique_ptr<expression> &a, const std::string &chrs)
-    : arg(a), chars(chrs)
+trim::trim(unique_ptr<expression> a, std::string chrs)
+    : arg(std::move(a)), chars(std::move(chrs))
 {
 }
 //----------------------------------------------------------------------------
@@ -220,7 +220,7 @@ std::string trim::value(const map &fields, const context &ctx) const
     return res;
 }
 //----------------------------------------------------------------------------
-trim_spaces::trim_spaces(std::unique_ptr<expression> &a) : arg(a)
+trim_spaces::trim_spaces(unique_ptr<expression> a) : arg(std::move(a))
 {
 }
 //----------------------------------------------------------------------------
@@ -236,9 +236,9 @@ std::string trim_spaces::value(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char lpad::func[] = "lpad";
-lpad::lpad(std::unique_ptr<expression> &a1,
-            std::unique_ptr<expression> &a2, char pad_chr)
-    : str_expr(a1), len_expr(a2), pad_char(pad_chr)
+lpad::lpad(unique_ptr<expression> a1,
+           unique_ptr<expression> a2, char pad_chr)
+    : str_expr(std::move(a1)), len_expr(std::move(a2)), pad_char(pad_chr)
 {
 }
 //----------------------------------------------------------------------------
@@ -253,7 +253,7 @@ std::string lpad::value(const map &fields, const context &ctx) const
     return str.length() >= len ? str : mfi::pad_front(str, len, pad_char);
 }
 //----------------------------------------------------------------------------
-hex2dec::hex2dec(std::unique_ptr<expression> &a) : arg(a)
+hex2dec::hex2dec(unique_ptr<expression> a) : arg(std::move(a))
 {
 }
 //----------------------------------------------------------------------------
@@ -278,7 +278,7 @@ std::string hex2dec::value(const map &fields, const context &ctx) const
     return std::to_string(res);
 }
 //----------------------------------------------------------------------------
-dec2hex::dec2hex(std::unique_ptr<expression> &a) : arg(a)
+dec2hex::dec2hex(unique_ptr<expression> a) : arg(std::move(a))
 {
 }
 //----------------------------------------------------------------------------
@@ -309,9 +309,11 @@ std::string dec2hex::value(const map &fields, const context &ctx) const
     return std::string(p, hex_end);
 }
 //----------------------------------------------------------------------------
-map_func::map_func(std::unique_ptr<expression> &val,
-                    mapping::list mlist, std::unique_ptr<expression> &def)
-    : value_expr(val), m(std::move(mlist)), def_value(std::move(def))
+map_func::map_func(unique_ptr<expression> val,
+                    mapping::list mlist, unique_ptr<expression> def)
+:
+    value_expr(std::move(val)), m(std::move(mlist)),
+    def_value(std::move(def))
 {
 }
 //----------------------------------------------------------------------------
@@ -327,8 +329,8 @@ std::string map_func::value(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char iadd::func[] = "iadd";
-iadd::iadd(std::unique_ptr<expression> &a1, std::unique_ptr<expression> &a2)
-    : arg1(a1), arg2(a2)
+iadd::iadd(unique_ptr<expression> a1, unique_ptr<expression> a2)
+    : arg1(std::move(a1)), arg2(std::move(a2))
 {
 }
 //----------------------------------------------------------------------------
@@ -342,8 +344,8 @@ std::string iadd::value(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char isub::func[] = "isub";
-isub::isub(std::unique_ptr<expression> &a1, std::unique_ptr<expression> &a2)
-    : arg1(a1), arg2(a2)
+isub::isub(unique_ptr<expression> a1, unique_ptr<expression> a2)
+    : arg1(std::move(a1)), arg2(std::move(a2))
 {
 }
 //----------------------------------------------------------------------------
@@ -357,8 +359,8 @@ std::string isub::value(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char idiv::func[] = "idiv";
-idiv::idiv(std::unique_ptr<expression> &a1, std::unique_ptr<expression> &a2)
-    : arg1(a1), arg2(a2)
+idiv::idiv(unique_ptr<expression> a1, unique_ptr<expression> a2)
+    : arg1(std::move(a1)), arg2(std::move(a2))
 {
 }
 //----------------------------------------------------------------------------
@@ -372,8 +374,8 @@ std::string idiv::value(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char idiv_ceil::func[] = "idiv_ceil";
-idiv_ceil::idiv_ceil(std::unique_ptr<expression> &a1, std::unique_ptr<expression> &a2)
-    : arg1(a1), arg2(a2)
+idiv_ceil::idiv_ceil(unique_ptr<expression> a1, unique_ptr<expression> a2)
+    : arg1(std::move(a1)), arg2(std::move(a2))
 {
 }
 //----------------------------------------------------------------------------
@@ -388,8 +390,8 @@ std::string idiv_ceil::value(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char imul::func[] = "imul";
-imul::imul(std::unique_ptr<expression> &a1, std::unique_ptr<expression> &a2)
-    : arg1(a1), arg2(a2)
+imul::imul(unique_ptr<expression> a1, unique_ptr<expression> a2)
+    : arg1(std::move(a1)), arg2(std::move(a2))
 {
 }
 //----------------------------------------------------------------------------
@@ -402,8 +404,8 @@ std::string imul::value(const map &fields, const context &ctx) const
     return std::to_string(arg1.value(fields, ctx) * arg2.value(fields, ctx));
 }
 //----------------------------------------------------------------------------
-sift::sift(std::unique_ptr<expression> &a, const std::string &chrs)
-    : arg(a), chars(chrs)
+sift::sift(unique_ptr<expression> a, std::string chrs)
+    : arg(std::move(a)), chars(std::move(chrs))
 {
 }
 //----------------------------------------------------------------------------
@@ -418,7 +420,7 @@ std::string sift::value(const map &fields, const context &ctx) const
     return res;
 }
 //----------------------------------------------------------------------------
-sift_nonprint::sift_nonprint(std::unique_ptr<expression> &a) : arg(a)
+sift_nonprint::sift_nonprint(unique_ptr<expression> a) : arg(std::move(a))
 {
 }
 //----------------------------------------------------------------------------
@@ -426,21 +428,16 @@ sift_nonprint::~sift_nonprint()
 {
 }
 //----------------------------------------------------------------------------
-struct sift_nonprint::is_non_printable
-{
-    bool operator()(char ch) const { return !std::isprint(ch); }
-};
-//----------------------------------------------------------------------------
 std::string sift_nonprint::value(const map &fields, const context &ctx) const
 {
     std::string res = arg.value(fields, ctx);
-    mfi::sift_if(res, is_non_printable());
+    mfi::sift_if(res, [](char ch){ return !mfi::ascii::isprint(ch); });
     return res;
 }
 //----------------------------------------------------------------------------
 const char bit_and::func[] = "bit_and";
-bit_and::bit_and(std::unique_ptr<expression> &a1, std::unique_ptr<expression> &a2)
-    : arg1(a1), arg2(a2)
+bit_and::bit_and(unique_ptr<expression> a1, unique_ptr<expression> a2)
+    : arg1(std::move(a1)), arg2(std::move(a2))
 {
 }
 //----------------------------------------------------------------------------
@@ -454,8 +451,8 @@ std::string bit_and::value(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char bit_or::func[] = "bit_or";
-bit_or::bit_or(std::unique_ptr<expression> &a1, std::unique_ptr<expression> &a2)
-    : arg1(a1), arg2(a2)
+bit_or::bit_or(unique_ptr<expression> a1, unique_ptr<expression> a2)
+    : arg1(std::move(a1)), arg2(std::move(a2))
 {
 }
 //----------------------------------------------------------------------------
@@ -469,8 +466,8 @@ std::string bit_or::value(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char bit_shl::func[] = "bit_shl";
-bit_shl::bit_shl(std::unique_ptr<expression> &a1, std::unique_ptr<expression> &a2)
-    : num(a1), pos(a2)
+bit_shl::bit_shl(unique_ptr<expression> a1, unique_ptr<expression> a2)
+    : num(std::move(a1)), pos(std::move(a2))
 {
 }
 //----------------------------------------------------------------------------
@@ -484,8 +481,8 @@ std::string bit_shl::value(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char bit_shr::func[] = "bit_shr";
-bit_shr::bit_shr(std::unique_ptr<expression> &a1, std::unique_ptr<expression> &a2)
-    : num(a1), pos(a2)
+bit_shr::bit_shr(unique_ptr<expression> a1, unique_ptr<expression> a2)
+    : num(std::move(a1)), pos(std::move(a2))
 {
 }
 //----------------------------------------------------------------------------
@@ -499,8 +496,7 @@ std::string bit_shr::value(const map &fields, const context &ctx) const
 }
 //----------------------------------------------------------------------------
 const char bit_not::func[] = "bit_not";
-bit_not::bit_not(std::unique_ptr<expression> &arg)
-    : num(arg)
+bit_not::bit_not(unique_ptr<expression> arg) : num(std::move(arg))
 {
 }
 //----------------------------------------------------------------------------
@@ -513,7 +509,7 @@ std::string bit_not::value(const map &fields, const context &ctx) const
     return std::to_string(~num.value(fields, ctx));
 }
 //----------------------------------------------------------------------------
-ip6_to_ip4::ip6_to_ip4(std::unique_ptr<expression> &arg) : expr(arg)
+ip6_to_ip4::ip6_to_ip4(unique_ptr<expression> arg) : expr(std::move(arg))
 {
 }
 //----------------------------------------------------------------------------
@@ -541,7 +537,7 @@ std::string ip6_to_ip4::value(const map &fields, const context &ctx) const
     return ipv4;
 }
 //----------------------------------------------------------------------------
-ip4_to_hex::ip4_to_hex(std::unique_ptr<expression> &arg) : expr(arg)
+ip4_to_hex::ip4_to_hex(unique_ptr<expression> arg) : expr(std::move(arg))
 {
 }
 //----------------------------------------------------------------------------

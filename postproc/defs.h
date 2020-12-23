@@ -2,6 +2,7 @@
 #define POSTPROC_DEFS_H
 
 #include<mfisoft/readonly_cstring.h>
+#include<initializer_list>
 #include<unordered_map>
 #include<string>
 
@@ -10,11 +11,15 @@ namespace postproc {
 //////////////////////////////////////////////////////////////////////////////
 class map : public std::unordered_map<std::string,std::string>
 {
+    typedef std::unordered_map<std::string, std::string> base;
     static const std::string empty_str;
 public:
+    map() = default;
+    map(std::initializer_list<value_type> il) : base(il) {}
+
     // Extend standard map by const subscript operation:
     // if field was not found then return empty string
-    using std::unordered_map<std::string,std::string>::operator[];
+    using base::operator[];
     const std::string &operator[](const std::string &key) const
     {
         const_iterator it = find(key);

@@ -5,7 +5,6 @@
 #include<postproc/regexp.h>
 #include<postproc/script.h>
 #include<istream>
-#include<memory>
 #include<list>
 
 namespace postproc {
@@ -54,8 +53,10 @@ class parser
         const char *name;
         FuncPtr func;
     };
-    static const name2func_t<function*(parser::*)()> functions[];
-    static const name2func_t<predicate*(parser::*)()> predicates[];
+    typedef name2func_t<unique_ptr<function>(parser::*)()> funcs_t;
+    typedef name2func_t<unique_ptr<predicate>(parser::*)()> preds_t;
+    static const funcs_t functions[];
+    static const preds_t predicates[];
 
     reader r;
 
@@ -72,76 +73,77 @@ class parser
         const FuncRec (&)[Sz], const std::string & );
 
     [[noreturn]] static void throw_invalid_func_arg(const reader & );
-    template<class , class > function *compile_trimlike_func();
+    template<class , class >
+    unique_ptr<function> compile_trimlike_func();
 
-    predicate *compile_pred_empty();
-    predicate *compile_pred_starts_with();
-    predicate *compile_pred_lt();
-    predicate *compile_pred_gt();
-    predicate *compile_pred_le();
-    predicate *compile_pred_ge();
+    unique_ptr<predicate> compile_pred_empty();
+    unique_ptr<predicate> compile_pred_starts_with();
+    unique_ptr<predicate> compile_pred_lt();
+    unique_ptr<predicate> compile_pred_gt();
+    unique_ptr<predicate> compile_pred_le();
+    unique_ptr<predicate> compile_pred_ge();
 
-    function *compile_func_length();
-    function *compile_func_substr();
-    function *compile_func_replace();
-    function *compile_func_replace_all();
-    function *compile_func_upper();
-    function *compile_func_lower();
-    function *compile_func_reverse();
-    function *compile_func_ltrim();
-    function *compile_func_rtrim();
-    function *compile_func_trim();
-    function *compile_func_lpad();
-    function *compile_func_hex2dec();
-    function *compile_func_dec2hex();
-    function *compile_func_map();
-    function *compile_func_iadd();
-    function *compile_func_isub();
-    function *compile_func_idiv();
-    function *compile_func_idiv_ceil();
-    function *compile_func_imul();
-    function *compile_func_sift();
-    function *compile_func_sift_nonprint();
-    function *compile_func_bit_and();
-    function *compile_func_bit_or();
-    function *compile_func_bit_shl();
-    function *compile_func_bit_shr();
-    function *compile_func_bit_not();
-    function *compile_func_ip6_to_ip4();
-    function *compile_func_ip4_to_hex();
-    function *compile_func_uuid();
+    unique_ptr<function> compile_func_length();
+    unique_ptr<function> compile_func_substr();
+    unique_ptr<function> compile_func_replace();
+    unique_ptr<function> compile_func_replace_all();
+    unique_ptr<function> compile_func_upper();
+    unique_ptr<function> compile_func_lower();
+    unique_ptr<function> compile_func_reverse();
+    unique_ptr<function> compile_func_ltrim();
+    unique_ptr<function> compile_func_rtrim();
+    unique_ptr<function> compile_func_trim();
+    unique_ptr<function> compile_func_lpad();
+    unique_ptr<function> compile_func_hex2dec();
+    unique_ptr<function> compile_func_dec2hex();
+    unique_ptr<function> compile_func_map();
+    unique_ptr<function> compile_func_iadd();
+    unique_ptr<function> compile_func_isub();
+    unique_ptr<function> compile_func_idiv();
+    unique_ptr<function> compile_func_idiv_ceil();
+    unique_ptr<function> compile_func_imul();
+    unique_ptr<function> compile_func_sift();
+    unique_ptr<function> compile_func_sift_nonprint();
+    unique_ptr<function> compile_func_bit_and();
+    unique_ptr<function> compile_func_bit_or();
+    unique_ptr<function> compile_func_bit_shl();
+    unique_ptr<function> compile_func_bit_shr();
+    unique_ptr<function> compile_func_bit_not();
+    unique_ptr<function> compile_func_ip6_to_ip4();
+    unique_ptr<function> compile_func_ip4_to_hex();
+    unique_ptr<function> compile_func_uuid();
 
     bool read_script_elements(script & , context & );
     void read_rule(script & );
     void read_named_list_decl(context & );
     bool skip_comment();
     void skip_parens();
-    condition *read_cond();
-    condition *read_cond_parens();
-    condition *read_cond_not();
-    condition *read_cond_predicate();
-    condition *read_cond_atom();
-    void read_bin_cond_op(std::string & );
-    condition *read_rest_of_cond(
-        std::unique_ptr<expression> & , const std::string & );
-    void read_action(action & );
-    operation *read_op();
-    expression *read_expr();
-    expression *read_simple_expr();
+    unique_ptr<condition> read_cond();
+    unique_ptr<condition> read_cond_parens();
+    unique_ptr<condition> read_cond_not();
+    unique_ptr<condition> read_cond_predicate();
+    unique_ptr<condition> read_cond_atom();
+    std::string read_bin_cond_op();
+    unique_ptr<condition> read_rest_of_cond(
+        unique_ptr<expression> , const std::string & );
+    action read_action();
+    unique_ptr<operation> read_op();
+    unique_ptr<expression> read_expr();
+    unique_ptr<expression> read_simple_expr();
     std::string read_identifier();
     regexp read_regexp();
-    string_list *read_string_list();
-    list_literal *read_list_literal();
+    unique_ptr<string_list> read_string_list();
+    unique_ptr<list_literal> read_list_literal();
     void read_list_literal(std::list<string_literal> & );
-    string_literal *read_string_literal();
-    string_literal *read_quoted_string();
-    integer_literal *read_integer_literal();
-    std::unique_ptr<expression>  read_func_arg(char = ')');
-    regexp                       read_func_arg_re(char = ')');
-    std::unique_ptr<string_list> read_func_arg_list(char = ')');
-    std::unique_ptr<string_literal> read_func_arg_literal(char = ')');
-    predicate *read_predicate(const std::string & );
-    function *read_function(const std::string & );
+    unique_ptr<string_literal> read_string_literal();
+    unique_ptr<string_literal> read_quoted_string();
+    unique_ptr<integer_literal> read_integer_literal();
+    unique_ptr<expression>  read_func_arg(char = ')');
+    regexp                  read_func_arg_re(char = ')');
+    unique_ptr<string_list> read_func_arg_list(char = ')');
+    unique_ptr<string_literal> read_func_arg_literal(char = ')');
+    unique_ptr<predicate> read_predicate(const std::string & );
+    unique_ptr<function> read_function(const std::string & );
 public:
     struct bad_syntax : public simple_exception
     {
@@ -152,7 +154,7 @@ public:
     parser(const parser &) = delete;
     parser &operator=(const parser &) = delete;
 
-    void parse(std::istream & , script & , context & );
+    script parse(std::istream & , context & );
 };
 //////////////////////////////////////////////////////////////////////////////
 
