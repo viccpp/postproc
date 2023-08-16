@@ -35,7 +35,7 @@ action:
     operation new-line-or-semicolon action
 
 named-list-declaration:
-    "@" identifier "=" list-literal
+    '@'identifier "=" list-literal
 
 operation:
     field "=" expr
@@ -90,7 +90,7 @@ mapping-entry:
     list-literal "->" expr
 
 predicate:
-    "?" function
+    '?'function
 
 identifier:
     ident-first-char
@@ -121,7 +121,7 @@ re-option:
     one of: i x m s
 
 string-list:
-    "@" identified
+    '@'identifier
     list-literal
 
 list-literal:
