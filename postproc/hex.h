@@ -22,10 +22,7 @@ inline char hi_nibble_to_hex_upper(unsigned char b)
 inline void append_base16_upper(unsigned char byte, std::string &s)
 {
     s += hi_nibble_to_hex_upper(byte);
-    s += mfi::ascii::toxdigit_upper(mfi::lo_nibble(byte));
-
-    s += mfi::ascii::toxdigit_upper(mfi::hi_nibble(byte));
-    s += mfi::ascii::toxdigit_upper(mfi::lo_nibble(byte));
+    s += lo_nibble_to_hex_upper(byte);
 }
 //----------------------------------------------------------------------------
 template<class Cont>
