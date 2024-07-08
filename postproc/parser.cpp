@@ -7,9 +7,9 @@
 #include<postproc/functions.h>
 #include<postproc/predicates.h>
 #include<postproc/hex.h>
-#include<mfisoft/ascii.h>
-#include<mfisoft/ascii_string.h>
-#include<mfisoft/string_buffer.h>
+#include<__vic/ascii.h>
+#include<__vic/ascii_string.h>
+#include<__vic/string_buffer.h>
 #include<cstring>
 #include<cassert>
 
@@ -109,34 +109,34 @@ const char *parser::reader::end_of_file::what() const noexcept
 }
 //----------------------------------------------------------------------------
 parser::bad_syntax::bad_syntax(const char *m, const reader &r)
-    : simple_exception(mfi::msg(128) <<
+    : simple_exception(__vic::msg(128) <<
         "Line " << r.get_line() << " column " << r.get_column() << ": " << m)
 {
 }
 //----------------------------------------------------------------------------
 inline bool parser::is_space(char ch)
 {
-    return mfi::ascii::isspace(ch);
+    return __vic::ascii::isspace(ch);
 }
 //----------------------------------------------------------------------------
 inline bool parser::is_digit(char ch)
 {
-    return mfi::ascii::isdigit(ch);
+    return __vic::ascii::isdigit(ch);
 }
 //----------------------------------------------------------------------------
 inline bool parser::is_ident_first_char(char ch)
 {
-    return mfi::ascii::isalpha(ch) || ch == '_';
+    return __vic::ascii::isalpha(ch) || ch == '_';
 }
 //----------------------------------------------------------------------------
 inline bool parser::is_ident_char(char ch)
 {
-    return is_ident_first_char(ch) || mfi::ascii::isdigit(ch);
+    return is_ident_first_char(ch) || __vic::ascii::isdigit(ch);
 }
 //----------------------------------------------------------------------------
 inline bool parser::is_integer_literal_first_char(char ch)
 {
-    return ch == '-' || ch == '+' || mfi::ascii::isdigit(ch);
+    return ch == '-' || ch == '+' || __vic::ascii::isdigit(ch);
 }
 //----------------------------------------------------------------------------
 
@@ -310,7 +310,7 @@ unique_ptr<condition> parser::read_cond_predicate()
     r.skip_ws();
     if(r.peek() != '(') throw bad_syntax("Expected \"(\"", r);
     r.skip();
-    return read_predicate(mfi::ascii::toupper(name));
+    return read_predicate(__vic::ascii::toupper(name));
 }
 //----------------------------------------------------------------------------
 std::string parser::read_bin_cond_op()
@@ -338,7 +338,7 @@ std::string parser::read_bin_cond_op()
                 case 'i':
                 case 'I':
                     r.skip();
-                    if(mfi::ascii::tolower(r.peek()) != 'n') break;
+                    if(__vic::ascii::tolower(r.peek()) != 'n') break;
                     r.skip();
                     return "!in";
             }
@@ -346,7 +346,7 @@ std::string parser::read_bin_cond_op()
         case 'i':
         case 'I': // in
             r.skip();
-            if(mfi::ascii::tolower(r.peek()) != 'n') break;
+            if(__vic::ascii::tolower(r.peek()) != 'n') break;
             r.skip();
             return "in";
     }
@@ -426,7 +426,7 @@ unique_ptr<operation> parser::read_op()
         throw bad_syntax(
             "Expected assignment, swap, \"break()\" or \"discard()\"", r);
     }
-    mfi::ascii::toupper(ident);
+    __vic::ascii::toupper(ident);
     r.skip_ws();
 
     if(ident == "DISCARD")
@@ -513,7 +513,7 @@ unique_ptr<expression> parser::read_simple_expr()
         if(r.peek() == '(') // function
         {
             r.skip();
-            return read_function(mfi::ascii::toupper(name));
+            return read_function(__vic::ascii::toupper(name));
         }
         else // field
             return make_unique<field>(name);
@@ -532,7 +532,7 @@ std::string parser::read_identifier()
     if(!is_ident_first_char(ch))
         throw bad_syntax("Expected identifier", r);
 
-    mfi::string_buffer st(64);
+    __vic::string_buffer st(64);
     try
     {
         do {
@@ -552,7 +552,7 @@ regexp parser::read_regexp()
     if(r.peek() != '/')
         throw bad_syntax("Expected regexp", r);
     r.skip();
-    mfi::string_buffer st(128), opts;
+    __vic::string_buffer st(128), opts;
     for(;;)
     {
         char ch = r.get();
@@ -628,7 +628,7 @@ unique_ptr<string_literal> parser::read_quoted_string()
 {
     assert(r.peek() == '"');
     r.skip();
-    mfi::string_buffer st(128);
+    __vic::string_buffer st(128);
     for(;;)
     {
         char ch = r.get();
@@ -663,7 +663,7 @@ unique_ptr<integer_literal> parser::read_integer_literal()
     assert(!is_space(ch));
     if(ch == '-' && !is_digit(r.peek()))
         throw bad_syntax("Invalid integer literal", r);
-    mfi::string_buffer st(128);
+    __vic::string_buffer st(128);
     st = ch;
     try
     {

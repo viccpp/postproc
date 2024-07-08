@@ -1,5 +1,5 @@
 #include<postproc/regexp.h>
-#include<mfisoft/string_buffer.h>
+#include<__vic/string_buffer.h>
 
 namespace postproc {
 
@@ -14,13 +14,13 @@ regexp::regexp(const std::string &pattern, const std::string &opts)
             case 'x': options |= PCRE_EXTENDED; break;
             case 'm': options |= PCRE_MULTILINE; break;
             case 's': options |= PCRE_DOTALL; break;
-            default: throw error(mfi::msg(64) <<
+            default: throw error(__vic::msg(64) <<
                 "RegExp compilation failed: unknown option '" << opt << '\'');
         }
     const char *errmsg;
     int erroffset;
     re = ::pcre_compile(pattern.c_str(), options, &errmsg, &erroffset, nullptr);
-    if(!re) throw error(mfi::msg(128) <<
+    if(!re) throw error(__vic::msg(128) <<
         "RegExp /" << pattern << '/' << opts <<
         " compilation failed at offset " << erroffset << ": " << errmsg);
 }
@@ -34,7 +34,7 @@ bool regexp::match(const char *str, std::size_t len) const
 {
     int rc = ::pcre_exec(re, nullptr, str, len, 0, 0, nullptr, 0);
     if(rc == PCRE_ERROR_NOMATCH) return false;
-    if(rc < 0) throw error(mfi::msg(64) <<
+    if(rc < 0) throw error(__vic::msg(64) <<
         "Error while execute RegExp. Code: " << rc);
     return true;
 }
@@ -52,10 +52,10 @@ bool regexp::exec(const char *str, std::size_t len, match_results &matches) cons
             matches.push_back({str + *p, str + *(p+1)});
         return true;
     }
-    if(rc == 0) throw error(mfi::msg(128) << "Too many matches. Only " <<
+    if(rc == 0) throw error(__vic::msg(128) << "Too many matches. Only " <<
         max_matches << " matches allowed in this RegExp version");
     //assert(rc < 0);
-    throw error(mfi::msg(64) << "Error while execute RegExp. Code: " << rc);
+    throw error(__vic::msg(64) << "Error while execute RegExp. Code: " << rc);
 }
 //----------------------------------------------------------------------------
 
@@ -106,7 +106,7 @@ void regexp::replacement::append(
         if(s.type == entry::plain) res.append(s.begin, s.end);
         else
         {
-            if(s.match_no >= matches.size()) throw error(mfi::msg(80) <<
+            if(s.match_no >= matches.size()) throw error(__vic::msg(80) <<
                 "No corresponding matching sub-expression for replacement"
                 " reference $" << s.match_no);
             auto m = matches[s.match_no];

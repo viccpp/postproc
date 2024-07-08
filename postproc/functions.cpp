@@ -1,12 +1,12 @@
 #include<postproc/functions.h>
 #include<postproc/defs.h>
 #include<postproc/hex.h>
-#include<mfisoft/ascii.h>
-#include<mfisoft/ascii_string.h>
-#include<mfisoft/string_utils.h>
-#include<mfisoft/string_buffer.h>
-#include<mfisoft/str2num.h>
-#include<mfisoft/uuid.h>
+#include<__vic/ascii.h>
+#include<__vic/ascii_string.h>
+#include<__vic/string_utils.h>
+#include<__vic/string_buffer.h>
+#include<__vic/str2num.h>
+//TODO: #include<mfisoft/uuid.h>
 #include<stdexcept>
 #include<cstdlib> // for abs() and div()
 #include<algorithm>
@@ -110,7 +110,7 @@ upper::~upper()
 std::string upper::value(const map &fields, const context &ctx) const
 {
     std::string res = arg.value(fields, ctx);
-    return mfi::ascii::toupper(res);
+    return __vic::ascii::toupper(res);
 }
 //----------------------------------------------------------------------------
 lower::lower(unique_ptr<expression> e) : arg(std::move(e))
@@ -124,7 +124,7 @@ lower::~lower()
 std::string lower::value(const map &fields, const context &ctx) const
 {
     std::string res = arg.value(fields, ctx);
-    return mfi::ascii::tolower(res);
+    return __vic::ascii::tolower(res);
 }
 //----------------------------------------------------------------------------
 reverse::reverse(unique_ptr<expression> e) : arg(std::move(e))
@@ -154,7 +154,7 @@ ltrim::~ltrim()
 std::string ltrim::value(const map &fields, const context &ctx) const
 {
     std::string res = arg.value(fields, ctx);
-    mfi::trim_front(res, chars.c_str());
+    __vic::trim_front(res, chars.c_str());
     return res;
 }
 //----------------------------------------------------------------------------
@@ -169,7 +169,7 @@ ltrim_spaces::~ltrim_spaces()
 std::string ltrim_spaces::value(const map &fields, const context &ctx) const
 {
     std::string res = arg.value(fields, ctx);
-    mfi::trim_front(res);
+    __vic::trim_front(res);
     return res;
 }
 //----------------------------------------------------------------------------
@@ -185,7 +185,7 @@ rtrim::~rtrim()
 std::string rtrim::value(const map &fields, const context &ctx) const
 {
     std::string res = arg.value(fields, ctx);
-    mfi::trim_back(res, chars.c_str());
+    __vic::trim_back(res, chars.c_str());
     return res;
 }
 //----------------------------------------------------------------------------
@@ -200,7 +200,7 @@ rtrim_spaces::~rtrim_spaces()
 std::string rtrim_spaces::value(const map &fields, const context &ctx) const
 {
     std::string res = arg.value(fields, ctx);
-    mfi::trim_back(res);
+    __vic::trim_back(res);
     return res;
 }
 //----------------------------------------------------------------------------
@@ -216,7 +216,7 @@ trim::~trim()
 std::string trim::value(const map &fields, const context &ctx) const
 {
     std::string res = arg.value(fields, ctx);
-    mfi::trim(res, chars.c_str());
+    __vic::trim(res, chars.c_str());
     return res;
 }
 //----------------------------------------------------------------------------
@@ -231,7 +231,7 @@ trim_spaces::~trim_spaces()
 std::string trim_spaces::value(const map &fields, const context &ctx) const
 {
     std::string res = arg.value(fields, ctx);
-    mfi::trim(res);
+    __vic::trim(res);
     return res;
 }
 //----------------------------------------------------------------------------
@@ -250,7 +250,7 @@ std::string lpad::value(const map &fields, const context &ctx) const
 {
     std::string str = str_expr.value(fields, ctx);
     size_t len = len_expr.value(fields, ctx);
-    return str.length() >= len ? str : mfi::pad_front(str, len, pad_char);
+    return str.length() >= len ? str : __vic::pad_front(str, len, pad_char);
 }
 //----------------------------------------------------------------------------
 hex2dec::hex2dec(unique_ptr<expression> a) : arg(std::move(a))
@@ -291,8 +291,8 @@ std::string dec2hex::value(const map &fields, const context &ctx) const
     std::string st = arg.value(fields, ctx);
     if(st.empty()) return st;
 
-    mfi::decimal_parser<uintmax_t> parser;
-    if(parser.parse(st) != mfi::number_parse_status::ok)
+    __vic::decimal_parser<uintmax_t> parser;
+    if(parser.parse(st) != __vic::number_parse_status::ok)
         return st;
     auto dec = parser.result();
     char hex[2 * sizeof dec];
@@ -416,7 +416,7 @@ sift::~sift()
 std::string sift::value(const map &fields, const context &ctx) const
 {
     std::string res = arg.value(fields, ctx);
-    mfi::sift(res, chars.c_str());
+    __vic::sift(res, chars.c_str());
     return res;
 }
 //----------------------------------------------------------------------------
@@ -431,7 +431,7 @@ sift_nonprint::~sift_nonprint()
 std::string sift_nonprint::value(const map &fields, const context &ctx) const
 {
     std::string res = arg.value(fields, ctx);
-    mfi::sift_if(res, [](char ch){ return !mfi::ascii::isprint(ch); });
+    __vic::sift_if(res, [](char ch){ return !__vic::ascii::isprint(ch); });
     return res;
 }
 //----------------------------------------------------------------------------
@@ -531,7 +531,7 @@ std::string ip6_to_ip4::value(const map &fields, const context &ctx) const
     std::string ipv6 = expr.value(fields, ctx);
     regexp::match_results r;
     if(!re.exec(ipv6, r)) return ipv6;
-    mfi::string_buffer ipv4(16);
+    __vic::string_buffer ipv4(16);
     ipv4 << to_dec(r[1]) << '.' << to_dec(r[2]) << '.'
          << to_dec(r[3]) << '.' << to_dec(r[4]);
     return ipv4;
@@ -548,8 +548,8 @@ ip4_to_hex::~ip4_to_hex()
 bool ip4_to_hex::to_hex(std::string::const_iterator it1,
     std::string::const_iterator it2, std::string &res)
 {
-    mfi::decimal_parser<uint8_t> p;
-    if(p.parse(it1, it2) != mfi::number_parse_status::ok)
+    __vic::decimal_parser<uint8_t> p;
+    if(p.parse(it1, it2) != __vic::number_parse_status::ok)
         return false;
     append_base16_upper(p.result(), res);
     return true;
@@ -558,7 +558,7 @@ bool ip4_to_hex::to_hex(std::string::const_iterator it1,
 std::string ip4_to_hex::value(const map &fields, const context &ctx) const
 {
     std::string ip = expr.value(fields, ctx);
-    mfi::string_buffer res;
+    __vic::string_buffer res;
     std::string::size_type pos1 = 0;
     for(int c = 3; c--;)
     {
@@ -573,8 +573,8 @@ std::string ip4_to_hex::value(const map &fields, const context &ctx) const
 //----------------------------------------------------------------------------
 std::string uuid::value(const map & , const context & ) const
 {
-    unsigned char uuid[16];
-    mfi::generate_random_uuid(uuid);
+    unsigned char uuid[16] = {};
+    //TODO: mfi::generate_random_uuid(uuid);
     return to_base16_upper(uuid);
 }
 //----------------------------------------------------------------------------

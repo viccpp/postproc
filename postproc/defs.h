@@ -1,7 +1,7 @@
 #ifndef POSTPROC_DEFS_H
 #define POSTPROC_DEFS_H
 
-#include<mfisoft/readonly_cstring.h>
+#include<__vic/readonly_cstring.h>
 #include<initializer_list>
 #include<unordered_map>
 #include<string>
@@ -37,7 +37,7 @@ class exception : public std::exception
 // Implementation base class
 class simple_exception : public exception
 {
-    mfi::readonly_cstring msg;
+    __vic::readonly_cstring msg;
 protected:
     explicit simple_exception(const char *m) : msg(m) {}
 public:

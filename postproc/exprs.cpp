@@ -1,13 +1,13 @@
 #include<postproc/exprs.h>
 #include<postproc/context.h>
-#include<mfisoft/ascii_string.h>
+#include<__vic/ascii_string.h>
 
 namespace postproc {
 
 //----------------------------------------------------------------------------
 field::field(std::string n) : name(std::move(n))
 {
-    mfi::ascii::toupper(name);
+    __vic::ascii::toupper(name);
 }
 //----------------------------------------------------------------------------
 field::~field()
@@ -34,7 +34,7 @@ session_constant::~session_constant()
 //----------------------------------------------------------------------------
 session_constant::session_constant(std::string n) : name(std::move(n))
 {
-    mfi::ascii::toupper(name);
+    __vic::ascii::toupper(name);
 }
 //----------------------------------------------------------------------------
 std::string session_constant::value(const map & , const context &ctx) const

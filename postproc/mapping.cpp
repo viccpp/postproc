@@ -1,5 +1,5 @@
 #include<postproc/mapping.h>
-#include<mfisoft/string_buffer.h>
+#include<__vic/string_buffer.h>
 #include<unordered_set>
 
 namespace postproc {
@@ -10,7 +10,7 @@ mapping::mapping(list mset)
     for(auto &in : mset)
         for(auto &key : in.first)
             if(!m.emplace(key, in.second.get()).second)
-                throw invalid_function_arg(mfi::msg(64) <<
+                throw invalid_function_arg(__vic::msg(64) <<
                     "Duplicate key value \"" << key << "\" in mapping");
     for(auto &in : mset)
         in.second.release();

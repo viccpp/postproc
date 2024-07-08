@@ -1,5 +1,5 @@
 #include<postproc/defs.h>
-#include<mfisoft/string_buffer.h>
+#include<__vic/string_buffer.h>
 
 namespace postproc {
 
@@ -22,12 +22,12 @@ const char *simple_exception::what() const noexcept
 }
 //----------------------------------------------------------------------------
 unknown_session_constant::unknown_session_constant(const std::string &name)
-    : undefined_constant(mfi::msg(64) << "Unknown session constant: $" << name)
+    : undefined_constant(__vic::msg(64) << "Unknown session constant: $" << name)
 {
 }
 //----------------------------------------------------------------------------
 unknown_named_list::unknown_named_list(const std::string &name)
-    : undefined_constant(mfi::msg(64) << "Unknown named list: @" << name)
+    : undefined_constant(__vic::msg(64) << "Unknown named list: @" << name)
 {
 }
 //----------------------------------------------------------------------------

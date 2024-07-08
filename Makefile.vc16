@@ -10,7 +10,7 @@ OBJS := $(patsubst %.cpp,%.obj,$(wildcard postproc/*.cpp) $(wildcard *.cpp))
 .PHONY: clean
 
 postproc.exe: $(OBJS)
-	$(CC) -Fe$@ $^ /link mfisoft14.lib pcre.lib
+	$(CC) -Fe$@ $^ /link __vic14.lib pcre.lib
 
 .cpp.obj:
 	$(CC) -EHsc -DPCRE_STATIC -O2 -Ob1 -GF -c -I. -Fo$@ $<

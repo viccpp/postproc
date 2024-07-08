@@ -10,7 +10,7 @@ OBJS := $(patsubst %.cpp,%.o,$(wildcard postproc/*.cpp) $(wildcard *.cpp))
 .PHONY: clean
 
 postprocess: $(OBJS)
-	$(CC) -o $@ $^ -lmfisoft14 -lpcre
+	$(CC) -o $@ $^ -l__vic14 -lpcre
 
 .cpp.o:
 	$(CC) -c -I. -DPCRE_STATIC -g -Wall -MMD -o $@ $<

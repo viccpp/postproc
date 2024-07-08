@@ -5,7 +5,7 @@
 #include<postproc/smart_ptr.h>
 #include<postproc/exprs.h>
 #include<postproc/string_list.h>
-#include<mfisoft/str2num.h>
+#include<__vic/str2num.h>
 
 namespace postproc {
 
@@ -105,8 +105,8 @@ public:
 template<class Num>
 Num num_parser<Num>::parse(const std::string &val, const char *func, int i)
 {
-    mfi::decimal_parser<Num> p;
-    if(p.parse(val) != mfi::number_parse_status::ok)
+    __vic::decimal_parser<Num> p;
+    if(p.parse(val) != __vic::number_parse_status::ok)
         throw_invalid_numeric_arg(val, func, i);
     return p.result();
 }

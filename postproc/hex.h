@@ -3,20 +3,20 @@
 
 #include<string>
 #include<iterator>
-#include<mfisoft/bits.h>
-#include<mfisoft/ascii.h>
+#include<__vic/bits.h>
+#include<__vic/ascii.h>
 
 namespace postproc {
 
 //----------------------------------------------------------------------------
 inline char lo_nibble_to_hex_upper(unsigned char b)
 {
-    return mfi::ascii::toxdigit_upper(mfi::lo_nibble(b));
+    return __vic::ascii::toxdigit_upper(__vic::lo_nibble(b));
 }
 //----------------------------------------------------------------------------
 inline char hi_nibble_to_hex_upper(unsigned char b)
 {
-    return mfi::ascii::toxdigit_upper(mfi::hi_nibble(b));
+    return __vic::ascii::toxdigit_upper(__vic::hi_nibble(b));
 }
 //----------------------------------------------------------------------------
 inline void append_base16_upper(unsigned char byte, std::string &s)
@@ -43,7 +43,7 @@ std::string to_base16_upper(const Cont &c)
 //----------------------------------------------------------------------------
 inline int xdigit_to_number(char ch)
 {
-    return mfi::ascii::xdigit_to_number(ch);
+    return __vic::ascii::xdigit_to_number(ch);
 }
 //----------------------------------------------------------------------------
 

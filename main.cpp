@@ -1,5 +1,5 @@
-#include<mfisoft/ascii_string.h>
-#include<mfisoft/error.h>
+#include<__vic/ascii_string.h>
+#include<__vic/error.h>
 #include<iterator>
 #include<iostream>
 #include<fstream>
@@ -23,7 +23,7 @@ public:
 
     std::string get(const std::string &name) const override
     {
-        if(mfi::ascii::equal_icase(name, "RECNO"))
+        if(__vic::ascii::equal_icase(name, "RECNO"))
             return std::to_string(count);
         throw_unknown_session_constant(name);
     }
@@ -111,7 +111,7 @@ void run()
 
     //auto pp = make_script();
     std::ifstream script("script");
-    if(!script.is_open()) throw mfi::exception("Couldn't open script file");
+    if(!script.is_open()) throw __vic::exception("Couldn't open script file");
     auto pp = parse_script(script, ctx);
     std::cout << std::distance(pp.begin(), pp.end()) << " rules\n\n";
 
