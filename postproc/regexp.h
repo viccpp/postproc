@@ -37,7 +37,7 @@ public:
     {
         explicit error(const char *msg) : simple_exception(msg) {}
     };
-    static const unsigned max_matches = 32;
+    static constexpr unsigned max_matches = 32;
 
     explicit regexp(const std::string & , const std::string & = {});
     regexp(regexp &&o) noexcept : re(o.re) { o.re = nullptr; }

@@ -3,6 +3,9 @@
 
 namespace postproc {
 
+#if __cplusplus < 201703L
+constexpr unsigned regexp::max_matches;
+#endif
 //----------------------------------------------------------------------------
 regexp::regexp(const std::string &pattern, const std::string &opts)
 {
